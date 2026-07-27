@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.tsx';
+@source '../**/*.ts';
+
+@theme {
+    /* Brand Colors */
+    --color-brand-50: #eff6ff;
+    --color-brand-100: #dbeafe;
+    --color-brand-200: #bfdbfe;
+    --color-brand-300: #93c5fd;
+    --color-brand-400: #60a5fa;
+    --color-brand-500: #3b82f6;
+    --color-brand-600: #2563eb;
+    --color-brand-700: #1d4ed8;
+    --color-brand-800: #1e40af;
+    --color-brand-900: #1e3a8a;
+    --color-brand-950: #172554;
+
+    /* Status Colors */
+    --color-status-pending: #f59e0b;
+    --color-status-review: #3b82f6;
+    --color-status-notified: #8b5cf6;
+    --color-status-resolved: #10b981;
+
+    /* Font */
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+        "Segoe UI Symbol", "Noto Color Emoji";
+
+    /* Border Radius */
+    --radius-card: 0.75rem;
+    --radius-button: 0.5rem;
+
+    /* Shadows */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-elevated: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+@layer base {
+    :root {
+        color-scheme: light;
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8fafc;
+        --bg-tertiary: #f1f5f9;
+        --border-default: #e2e8f0;
+        --border-muted: #f1f5f9;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #94a3b8;
+    }
+
+    .dark {
+        color-scheme: dark;
+        --bg-primary: #0f172a;
+        --bg-secondary: #1e293b;
+        --bg-tertiary: #334155;
+        --border-default: #334155;
+        --border-muted: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5e1;
+        --text-muted: #64748b;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
+@layer utilities {
+    .glass {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .dark .glass {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .bg-surface-primary { background-color: var(--bg-primary); }
+    .bg-surface-secondary { background-color: var(--bg-secondary); }
+    .bg-surface-tertiary { background-color: var(--bg-tertiary); }
+    .border-default { border-color: var(--border-default); }
+    .text-primary { color: var(--text-primary); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-muted { color: var(--text-muted); }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.625rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        line-height: 1;
+    }
+
+    .status-pendiente {
+        color: #d97706;
+        background-color: #fef3c7;
+    }
+    .dark .status-pendiente {
+        color: #fbbf24;
+        background-color: rgba(251, 191, 36, 0.15);
+    }
+    .status-en_revision {
+        color: #1d4ed8;
+        background-color: #dbeafe;
+    }
+    .dark .status-en_revision {
+        color: #60a5fa;
+        background-color: rgba(96, 165, 250, 0.15);
+    }
+    .status-notificado {
+        color: #7c3aed;
+        background-color: #ede9fe;
+    }
+    .dark .status-notificado {
+        color: #a78bfa;
+        background-color: rgba(167, 139, 250, 0.15);
+    }
+    .status-resuelto {
+        color: #059669;
+        background-color: #d1fae5;
+    }
+    .dark .status-resuelto {
+        color: #34d399;
+        background-color: rgba(52, 211, 153, 0.15);
+    }
+}

@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "strict": true,
+        "jsx": "react-jsx",
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["resources/js/*"]
+        },
+        "types": ["node", "vite/client"],
+        "lib": ["ESNext", "DOM", "DOM.Iterable"],
+        "allowImportingTsExtensions": true,
+        "noEmit": true,
+        "isolatedModules": true,
+        "skipLibCheck": true
+    },
+    "include": ["resources/js/**/*"],
+    "exclude": ["node_modules", "vendor"]
+}
