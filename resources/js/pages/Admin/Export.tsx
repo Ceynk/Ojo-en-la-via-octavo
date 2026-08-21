@@ -16,8 +16,10 @@ interface ExportProps extends PageProps {
 const STATUS_OPTIONS: { value: ReportStatus | ''; label: string }[] = [
     { value: '',           label: 'Todos los estados' },
     { value: 'pendiente',  label: 'Pendiente' },
-    { value: 'en_revision',label: 'En revisión' },
     { value: 'notificado', label: 'Notificado' },
+    { value: 'en_camino',  label: 'En camino' },
+    { value: 'en_revision',label: 'En revisión' },
+    { value: 'en_proceso', label: 'En proceso' },
     { value: 'resuelto',   label: 'Resuelto' },
 ];
 
@@ -147,7 +149,7 @@ export default function Export() {
                                 className="w-full rounded-lg border border-default bg-surface-secondary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
                             >
                                 {STATUS_OPTIONS.map((o) => (
-                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                    <option key={o.value} value={o.value} className="bg-white text-gray-900">{o.label}</option>
                                 ))}
                             </select>
                         </div>

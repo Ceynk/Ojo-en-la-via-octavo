@@ -5,6 +5,8 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\EntityMiddleware;
+use App\Http\Middleware\OperatorMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => AdminMiddleware::class,
+            'entity' => EntityMiddleware::class,
+            'operator' => OperatorMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

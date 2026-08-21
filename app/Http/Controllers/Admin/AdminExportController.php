@@ -28,7 +28,7 @@ class AdminExportController extends Controller
             'status' => ['nullable', 'in:pendiente,en_revision,notificado,resuelto'],
         ]);
 
-        $query = Report::with(['user:id,name,email', 'incidentType:id,name']);
+        $query = Report::with(['user:id,first_name,last_name,email', 'incidentType:id,name']);
 
         if ($request->filled('from')) {
             $query->whereDate('created_at', '>=', $request->from);

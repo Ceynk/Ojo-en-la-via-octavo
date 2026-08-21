@@ -4,13 +4,17 @@ import { motion } from 'framer-motion';
 import {
     User, Mail, Phone, Camera, Pencil, X, Check,
     AlertTriangle, MessageSquare, Heart, Loader2,
+    IdCard, Home, MapPin, Cake, Users as UsersIcon,
 } from 'lucide-react';
 import AppLayout from '@/components/shared/AppLayout';
 import ReportCard from '@/components/reports/ReportCard';
 import ReportDrawer from '@/components/reports/ReportDrawer';
 import { FlashMessages } from '@/components/ui/alert';
-import { cn, getStorageUrl } from '@/lib/utils';
-import type { PageProps, Report } from '@/types';
+import { cn, DOCUMENT_TYPE_LABELS, GENDER_LABELS, getStorageUrl } from '@/lib/utils';
+import type { PageProps, Report, DocumentType, Gender } from '@/types';
+
+const DOCUMENT_TYPES: DocumentType[] = ['CC', 'TI', 'CE', 'PA'];
+const GENDERS: Gender[] = ['masculino', 'femenino', 'otro', 'prefiero_no_decir'];
 
 interface Stats {
     reports: number;
@@ -39,8 +43,15 @@ export default function Profile() {
     const photoRef = useRef<HTMLInputElement>(null);
 
     const form = useForm({
-        name: user.name,
+        first_name: user.first_name,
+        last_name: user.last_name,
         phone: user.phone,
+        document_type: user.document_type ?? '',
+        document_number: user.document_number ?? '',
+        address: user.address ?? '',
+        neighborhood: user.neighborhood ?? '',
+        birth_date: user.birth_date ?? '',
+        gender: user.gender ?? '',
         profile_photo: null as File | null,
     });
 
@@ -126,37 +137,94 @@ export default function Profile() {
                             {editing ? (
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <div className="grid gap-4 sm:grid-cols-2">
-                                        {/* Name */}
-                                        <div className="flex flex-col gap-1.5">
-                                            <label className="text-xs font-medium text-muted">Nombre completo</label>
+                                        <ProfileField label="Nombres" error={form.errors.first_name}>
                                             <input
                                                 type="text"
-                                                value={form.data.name}
-                                                onChange={(e) => form.setData('name', e.target.value)}
-                                                className={cn(
-                                                    'rounded-lg border px-3 py-2 text-sm text-primary outline-none transition-colors',
-                                                    'bg-surface-primary focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20',
-                                                    form.errors.name ? 'border-red-400' : 'border-default',
-                                                )}
+                                                value={form.data.first_name}
+                                                onChange={(e) => form.setData('first_name', e.target.value)}
+                                                className={inputClass(!!form.errors.first_name)}
                                             />
-                                            {form.errors.name && <p className="text-xs text-red-500">{form.errors.name}</p>}
-                                        </div>
+                                        </ProfileField>
 
-                                        {/* Phone */}
-                                        <div className="flex flex-col gap-1.5">
-                                            <label className="text-xs font-medium text-muted">Teléfono</label>
+                                        <ProfileField label="Apellidos" error={form.errors.last_name}>
+                                            <input
+                                                type="text"
+                                                value={form.data.last_name}
+                                                onChange={(e) => form.setData('last_name', e.target.value)}
+                                                className={inputClass(!!form.errors.last_name)}
+                                            />
+                                        </ProfileField>
+
+                                        <ProfileField label="Teléfono" error={form.errors.phone}>
                                             <input
                                                 type="text"
                                                 value={form.data.phone}
                                                 onChange={(e) => form.setData('phone', e.target.value)}
-                                                className={cn(
-                                                    'rounded-lg border px-3 py-2 text-sm text-primary outline-none transition-colors',
-                                                    'bg-surface-primary focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20',
-                                                    form.errors.phone ? 'border-red-400' : 'border-default',
-                                                )}
+                                                className={inputClass(!!form.errors.phone)}
                                             />
-                                            {form.errors.phone && <p className="text-xs text-red-500">{form.errors.phone}</p>}
-                                        </div>
+                                        </ProfileField>
+
+                                        <ProfileField label="Tipo de documento" error={form.errors.document_type}>
+                                            <select
+                                                value={form.data.document_type}
+                                                onChange={(e) => form.setData('document_type', e.target.value)}
+                                                className={inputClass(!!form.errors.document_type)}
+                                            >
+                                                <option value="" disabled>Selecciona un tipo</option>
+                                                {DOCUMENT_TYPES.map((d) => (
+                                                    <option key={d} value={d}>{DOCUMENT_TYPE_LABELS[d]}</option>
+                                                ))}
+                                            </select>
+                                        </ProfileField>
+
+                                        <ProfileField label="Número de documento" error={form.errors.document_number}>
+                                            <input
+                                                type="text"
+                                                value={form.data.document_number}
+                                                onChange={(e) => form.setData('document_number', e.target.value)}
+                                                className={inputClass(!!form.errors.document_number)}
+                                            />
+                                        </ProfileField>
+
+                                        <ProfileField label="Fecha de nacimiento" error={form.errors.birth_date}>
+                                            <input
+                                                type="date"
+                                                value={form.data.birth_date}
+                                                onChange={(e) => form.setData('birth_date', e.target.value)}
+                                                className={inputClass(!!form.errors.birth_date)}
+                                            />
+                                        </ProfileField>
+
+                                        <ProfileField label="Dirección" error={form.errors.address}>
+                                            <input
+                                                type="text"
+                                                value={form.data.address}
+                                                onChange={(e) => form.setData('address', e.target.value)}
+                                                className={inputClass(!!form.errors.address)}
+                                            />
+                                        </ProfileField>
+
+                                        <ProfileField label="Barrio" error={form.errors.neighborhood}>
+                                            <input
+                                                type="text"
+                                                value={form.data.neighborhood}
+                                                onChange={(e) => form.setData('neighborhood', e.target.value)}
+                                                className={inputClass(!!form.errors.neighborhood)}
+                                            />
+                                        </ProfileField>
+
+                                        <ProfileField label="Género" error={form.errors.gender}>
+                                            <select
+                                                value={form.data.gender}
+                                                onChange={(e) => form.setData('gender', e.target.value)}
+                                                className={inputClass(!!form.errors.gender)}
+                                            >
+                                                <option value="" disabled>Selecciona una opción</option>
+                                                {GENDERS.map((g) => (
+                                                    <option key={g} value={g}>{GENDER_LABELS[g]}</option>
+                                                ))}
+                                            </select>
+                                        </ProfileField>
                                     </div>
 
                                     {/* Photo name indicator */}
@@ -208,14 +276,36 @@ export default function Profile() {
                                         </button>
                                     </div>
 
-                                    <div className="mt-4 space-y-2">
+                                    <div className="mt-4 grid gap-2 sm:grid-cols-2">
                                         <div className="flex items-center gap-2 text-sm text-secondary">
-                                            <Mail className="h-4 w-4 text-muted" />
+                                            <Mail className="h-4 w-4 shrink-0 text-muted" />
                                             {user.email}
                                         </div>
                                         <div className="flex items-center gap-2 text-sm text-secondary">
-                                            <Phone className="h-4 w-4 text-muted" />
+                                            <Phone className="h-4 w-4 shrink-0 text-muted" />
                                             {user.phone || <span className="text-muted italic">Sin teléfono</span>}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-secondary">
+                                            <IdCard className="h-4 w-4 shrink-0 text-muted" />
+                                            {user.document_type && user.document_number
+                                                ? `${user.document_type} ${user.document_number}`
+                                                : <span className="text-muted italic">Sin documento</span>}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-secondary">
+                                            <Cake className="h-4 w-4 shrink-0 text-muted" />
+                                            {user.birth_date || <span className="text-muted italic">Sin fecha de nacimiento</span>}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-secondary">
+                                            <Home className="h-4 w-4 shrink-0 text-muted" />
+                                            {user.address || <span className="text-muted italic">Sin dirección</span>}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-secondary">
+                                            <MapPin className="h-4 w-4 shrink-0 text-muted" />
+                                            {user.neighborhood || <span className="text-muted italic">Sin barrio</span>}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-secondary">
+                                            <UsersIcon className="h-4 w-4 shrink-0 text-muted" />
+                                            {user.gender ? GENDER_LABELS[user.gender] : <span className="text-muted italic">Sin género</span>}
                                         </div>
                                     </div>
                                 </div>
@@ -297,5 +387,23 @@ export default function Profile() {
                 onClose={() => setSelectedReportId(null)}
             />
         </AppLayout>
+    );
+}
+
+function inputClass(hasError: boolean) {
+    return cn(
+        'rounded-lg border px-3 py-2 text-sm text-primary outline-none transition-colors',
+        'bg-surface-primary focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20',
+        hasError ? 'border-red-400' : 'border-default',
+    );
+}
+
+function ProfileField({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+    return (
+        <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted">{label}</label>
+            {children}
+            {error && <p className="text-xs text-red-500">{error}</p>}
+        </div>
     );
 }

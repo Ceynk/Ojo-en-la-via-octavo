@@ -33,25 +33,52 @@ class AuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(
-            $user->role === 'admin' ? route('admin.dashboard') : route('citizen.home')
-        );
+        $user->update(['last_login_at' => now()]);
+
+        // A `redirect` input (from e.g. the entity notification email's login link) takes
+        // priority over the role-based default — but only if it's a same-site relative
+        // path, never an absolute/external URL, to avoid turning this into an open redirect.
+        $redirect = $request->input('redirect');
+        if (is_string($redirect) && str_starts_with($redirect, '/') && !str_starts_with($redirect, '//')) {
+            return redirect()->intended($redirect);
+        }
+
+        return redirect()->intended(match ($user->role) {
+            'admin'    => route('admin.dashboard'),
+            'entity'   => route('entity.dashboard'),
+            'operator' => route('operator.dashboard'),
+            default    => route('citizen.home'),
+        });
     }
 
     public function register(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'name'     => ['required', 'string', 'max:100'],
-            'phone'    => ['required', 'string', 'max:20', 'unique:users,phone'],
-            'email'    => ['required', 'email', 'unique:users,email'],
-            'password' => ['required', Password::min(8)->mixedCase()->numbers()],
+            'first_name'      => ['required', 'string', 'max:100'],
+            'last_name'       => ['required', 'string', 'max:100'],
+            'phone'           => ['required', 'string', 'max:20', 'unique:users,phone'],
+            'email'           => ['required', 'email', 'unique:users,email'],
+            'document_type'   => ['required', 'in:CC,TI,CE,PA'],
+            'document_number' => ['required', 'string', 'max:30', 'unique:users,document_number'],
+            'address'         => ['required', 'string', 'max:150'],
+            'neighborhood'    => ['required', 'string', 'max:100'],
+            'birth_date'      => ['required', 'date', 'before:today'],
+            'gender'          => ['required', 'in:masculino,femenino,otro,prefiero_no_decir'],
+            'password'        => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ]);
 
         $user = User::create([
-            'name'     => $data['name'],
-            'phone'    => $data['phone'],
-            'email'    => $data['email'],
-            'password' => Hash::make($data['password']),
+            'first_name'      => $data['first_name'],
+            'last_name'       => $data['last_name'],
+            'phone'           => $data['phone'],
+            'email'           => $data['email'],
+            'document_type'   => $data['document_type'],
+            'document_number' => $data['document_number'],
+            'address'         => $data['address'],
+            'neighborhood'    => $data['neighborhood'],
+            'birth_date'      => $data['birth_date'],
+            'gender'          => $data['gender'],
+            'password'        => Hash::make($data['password']),
         ]);
 
         Auth::login($user);

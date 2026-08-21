@@ -1,90 +1,71 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import { MapPin } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AuthLayoutProps {
     children: React.ReactNode;
-    title: string;
-    subtitle?: React.ReactNode;
+    eyebrow: string;
+    tagline?: React.ReactNode;
+    footer?: React.ReactNode;
+    wide?: boolean;
 }
 
-const stats = [
-    { value: '+500', label: 'Reportes activos' },
-    { value: '85%', label: 'Tasa de resolución' },
-    { value: '+1.2k', label: 'Ciudadanos' },
-];
-
-export default function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
+export default function AuthLayout({ children, eyebrow, tagline, footer, wide = false }: AuthLayoutProps) {
     return (
-        <div className="flex min-h-screen bg-surface-secondary">
-            {/* Left panel — branding */}
+        <div
+            className="relative flex min-h-screen items-center justify-center bg-cover bg-center px-4 py-12"
+            style={{ backgroundImage: "url('/Fondo/fondo-login.png')" }}
+        >
+            <div className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/70" />
+
             <motion.div
-                initial={{ opacity: 0, x: -40 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950 p-12 text-white relative overflow-hidden"
+                className={cn('relative w-full', wide ? 'max-w-2xl' : 'max-w-md')}
             >
-                {/* Background decoration */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    <div className="absolute -top-24 -right-24 h-96 w-96 rounded-full bg-brand-600/20 blur-3xl" />
-                    <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-brand-900/40 blur-3xl" />
-                </div>
+                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
+                    <div className="h-1.5 w-full bg-gradient-to-r from-emerald-400 via-brand-400 to-brand-600" />
 
-                <div className="relative flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                        <MapPin className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-xl font-bold">Ojo en la Vía</span>
-                </div>
-
-                <div className="relative">
-                    <h1 className="text-4xl font-bold leading-tight mb-4">
-                        Juntos mejoramos<br />nuestra ciudad
-                    </h1>
-                    <p className="text-brand-200 text-lg leading-relaxed max-w-md">
-                        Reporta incidentes viales en Villavicencio y ayuda a las
-                        entidades a responder más rápido.
-                    </p>
-                </div>
-
-                <div className="relative flex items-center gap-6">
-                    {stats.map((stat, i) => (
-                        <React.Fragment key={stat.label}>
-                            {i > 0 && <div className="h-10 w-px bg-brand-700" />}
-                            <div className="flex flex-col gap-0.5">
-                                <span className="text-3xl font-bold text-white">{stat.value}</span>
-                                <span className="text-sm text-brand-300">{stat.label}</span>
+                    <div className={cn('py-10', wide ? 'px-6 sm:px-10' : 'px-8')}>
+                        <div className="flex flex-col items-center text-center">
+                            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg">
+                                <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-[4.5rem] w-[4.5rem] object-contain" />
                             </div>
-                        </React.Fragment>
-                    ))}
-                </div>
-            </motion.div>
-
-            {/* Right panel — content */}
-            <div className="flex flex-1 items-center justify-center px-6 py-12">
-                <motion.div
-                    initial={{ opacity: 0, y: 24 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
-                    className="w-full max-w-md"
-                >
-                    {/* Mobile logo */}
-                    <Link href="/" className="flex items-center gap-2 mb-8 lg:hidden">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600">
-                            <MapPin className="h-4 w-4 text-white" />
+                            <h1 className="mt-4 text-xl font-bold tracking-wide text-white">
+                                OJO EN LA VÍA
+                            </h1>
+                            <p className="text-sm font-semibold tracking-wide text-brand-300">
+                                VILLAVICENCIO
+                            </p>
+                            {tagline && (
+                                <p className="mt-1 text-sm text-white/70">{tagline}</p>
+                            )}
                         </div>
-                        <span className="text-lg font-bold text-primary">Ojo en la Vía</span>
-                    </Link>
 
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-bold text-primary">{title}</h2>
-                        {subtitle && <div className="mt-1.5 text-secondary text-sm">{subtitle}</div>}
+                        <div className="my-7 flex items-center gap-3">
+                            <div className="h-px flex-1 bg-white/20" />
+                            <span className="text-xs font-semibold tracking-widest text-white/60">
+                                {eyebrow}
+                            </span>
+                            <div className="h-px flex-1 bg-white/20" />
+                        </div>
+
+                        {children}
+
+                        {footer && (
+                            <p className="mt-7 text-center text-xs text-white/50">
+                                {footer}
+                            </p>
+                        )}
                     </div>
+                </div>
 
-                    {children}
-                </motion.div>
-            </div>
+                <p className="mt-6 text-center text-xs text-white/40">
+                    © {new Date().getFullYear()} Ojo en la Vía · Villavicencio
+                </p>
+            </motion.div>
         </div>
     );
 }

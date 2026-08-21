@@ -42,9 +42,16 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $data = $request->validate([
-            'name'          => ['required', 'string', 'max:100'],
-            'phone'         => ['required', 'string', 'max:20', 'unique:users,phone,' . $user->id],
-            'profile_photo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'first_name'      => ['required', 'string', 'max:100'],
+            'last_name'       => ['required', 'string', 'max:100'],
+            'phone'           => ['required', 'string', 'max:20', 'unique:users,phone,' . $user->id],
+            'document_type'   => ['required', 'in:CC,TI,CE,PA'],
+            'document_number' => ['required', 'string', 'max:30', 'unique:users,document_number,' . $user->id],
+            'address'         => ['required', 'string', 'max:150'],
+            'neighborhood'    => ['required', 'string', 'max:100'],
+            'birth_date'      => ['required', 'date', 'before:today'],
+            'gender'          => ['required', 'in:masculino,femenino,otro,prefiero_no_decir'],
+            'profile_photo'   => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         if ($request->hasFile('profile_photo')) {

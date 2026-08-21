@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, Reply, Pencil, Trash2, Check, X, Loader2 } from 'lucide-react';
+import { Heart, Reply, Pencil, Trash2, Check, X, Loader2, ShieldCheck, Building2 } from 'lucide-react';
 import axios from 'axios';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import CommentForm from './CommentForm';
@@ -81,12 +81,23 @@ export default function CommentItem({
         }
     }
 
-    const avatarLetter = comment.user?.name?.[0]?.toUpperCase() ?? '?';
+    const isAdminComment = comment.user?.role === 'admin' && !comment.is_deleted;
+    const isEntityComment = comment.user?.role === 'entity' && !comment.is_deleted;
+    const isPriorityComment = isAdminComment || isEntityComment;
+    const displayName = isEntityComment
+        ? comment.user?.entity?.name ?? comment.user?.name
+        : comment.user?.name;
+    const avatarLetter = displayName?.[0]?.toUpperCase() ?? '?';
 
     return (
         <div className={cn('flex gap-3', depth > 0 && 'ml-8 border-l-2 border-default pl-4')}>
             {/* Avatar */}
-            <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[11px] font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-400">
+            <div className={cn(
+                'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
+                isPriorityComment
+                    ? 'bg-brand-600 text-white'
+                    : 'bg-brand-100 text-brand-700 dark:bg-brand-900/40 dark:text-brand-400',
+            )}>
                 {comment.is_deleted ? '?' : avatarLetter}
             </div>
 
@@ -94,7 +105,19 @@ export default function CommentItem({
                 {/* Header */}
                 {!comment.is_deleted && (
                     <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-semibold text-primary">{comment.user?.name}</span>
+                        <span className="text-xs font-semibold text-primary">{displayName}</span>
+                        {isAdminComment && (
+                            <span className="flex items-center gap-1 rounded-full bg-brand-600 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                                <ShieldCheck className="h-2.5 w-2.5" />
+                                Ojo en la Vía
+                            </span>
+                        )}
+                        {isEntityComment && (
+                            <span className="flex items-center gap-1 rounded-full bg-brand-600 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                                <Building2 className="h-2.5 w-2.5" />
+                                Entidad
+                            </span>
+                        )}
                         <span className="text-[10px] text-muted">{formatRelativeTime(comment.created_at)}</span>
                         {comment.is_edited && (
                             <span className="text-[10px] text-muted">(editado)</span>

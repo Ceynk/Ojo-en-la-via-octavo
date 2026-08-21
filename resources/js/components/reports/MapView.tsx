@@ -1,88 +1,135 @@
-import { useEffect, useRef } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import type { Report, ReportStatus } from '@/types';
-import { STATUS_LABELS, getStorageUrl, truncate } from '@/lib/utils';
+import { getIncidentTypeStyle, type IncidentTypeStyle } from '@/lib/incidentTypeStyle';
 
 // Villavicencio, Colombia
 const DEFAULT_CENTER: [number, number] = [4.142, -73.6266];
 const DEFAULT_ZOOM = 13;
 
-const MARKER_COLORS: Record<ReportStatus, string> = {
+const STATUS_RING_COLORS: Record<ReportStatus, string> = {
     pendiente: '#f59e0b',
-    en_revision: '#3b82f6',
     notificado: '#8b5cf6',
+    en_camino: '#0ea5e9',
+    en_revision: '#3b82f6',
+    en_proceso: '#f97316',
     resuelto: '#10b981',
 };
 
-function statusIcon(status: ReportStatus): L.DivIcon {
-    const color = MARKER_COLORS[status] ?? '#94a3b8';
+// Leaflet markers/popups are raw HTML strings, not React trees — render the Lucide icon
+// to a static SVG string once so it can be embedded like any other markup.
+function iconSvg(Icon: IncidentTypeStyle['Icon'], props: { size?: number; color?: string; strokeWidth?: number } = {}): string {
+    return renderToStaticMarkup(
+        createElement(Icon, { size: props.size ?? 14, color: props.color ?? 'currentColor', strokeWidth: props.strokeWidth ?? 2.25 }),
+    );
+}
+
+function reportIcon(report: Report): L.DivIcon {
+    const { color, Icon } = getIncidentTypeStyle(report.incident_type);
+    const ring = STATUS_RING_COLORS[report.status] ?? '#94a3b8';
     return L.divIcon({
-        html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
+        html: `
+            <div style="
+                width:28px;height:28px;border-radius:50% 50% 50% 0;
+                transform:rotate(-45deg);
+                background:${color};
+                border:2.5px solid ${ring};
+                box-shadow:0 1px 4px rgba(0,0,0,0.4);
+                display:flex;align-items:center;justify-content:center;
+            ">
+                <span style="transform:rotate(45deg);display:flex;color:#fff">${iconSvg(Icon, { size: 14 })}</span>
+            </div>`,
         className: '',
-        iconSize: [14, 14],
-        iconAnchor: [7, 7],
-        popupAnchor: [0, -12],
+        iconSize: [28, 28],
+        iconAnchor: [14, 28],
+        popupAnchor: [0, -26],
     });
 }
 
 function selectedIcon(): L.DivIcon {
+    // Teardrop pin — deliberately different from the round "you are here" dot so the two
+    // never look like duplicates of the same marker.
     return L.divIcon({
-        html: `<div style="width:20px;height:20px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 2px 8px rgba(37,99,235,0.6)"></div>`,
+        html: `
+            <div style="
+                width:30px;height:30px;
+                border-radius:50% 50% 50% 0;
+                transform:rotate(-45deg);
+                background:#2563eb;
+                border:2.5px solid white;
+                box-shadow:0 3px 8px rgba(37,99,235,0.5);
+                display:flex;align-items:center;justify-content:center;
+            ">
+                <div style="width:9px;height:9px;border-radius:50%;background:white;transform:rotate(45deg)"></div>
+            </div>`,
         className: '',
-        iconSize: [20, 20],
-        iconAnchor: [10, 10],
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],
+        popupAnchor: [0, -28],
     });
 }
 
-function popupContent(report: Report): string {
-    const image = report.images?.[0];
-    const statusColor =
-        report.status === 'pendiente' ? '#d97706' :
-        report.status === 'en_revision' ? '#1d4ed8' :
-        report.status === 'notificado' ? '#7c3aed' : '#059669';
-    const statusBg =
-        report.status === 'pendiente' ? '#fef3c7' :
-        report.status === 'en_revision' ? '#dbeafe' :
-        report.status === 'notificado' ? '#ede9fe' : '#d1fae5';
-
-    return `
-        <div style="min-width:210px;max-width:250px;font-family:Inter,sans-serif;line-height:1.4">
-            ${image ? `<img src="${getStorageUrl(image.path)}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;margin-bottom:8px;display:block" />` : ''}
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-                <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:9999px;background:${statusBg};color:${statusColor}">
-                    ${STATUS_LABELS[report.status]}
-                </span>
-                ${report.incident_type ? `<span style="font-size:10px;color:#64748b">${report.incident_type.name}</span>` : ''}
-            </div>
-            <p style="font-size:12px;color:#1e293b;margin:0 0 4px;font-weight:500">${truncate(report.description, 90)}</p>
-            ${report.address_text ? `<p style="font-size:10px;color:#94a3b8;margin:0">${truncate(report.address_text, 50)}</p>` : ''}
-            <p style="font-size:10px;color:#cbd5e1;margin:4px 0 0">Por ${report.user?.name ?? 'Usuario'}</p>
-            <button data-report-id="${report.id}" style="margin-top:8px;width:100%;padding:5px 0;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer">
-                Ver comentarios
-            </button>
-        </div>
-    `;
+function myLocationIcon(): L.DivIcon {
+    return L.divIcon({
+        html: `
+            <div style="position:relative;width:18px;height:18px;">
+                <div class="my-location-pulse" style="position:absolute;inset:-9px;border-radius:50%;background:rgba(37,99,235,0.3);"></div>
+                <div style="position:absolute;inset:0;border-radius:50%;background:#2563eb;border:2.5px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>
+            </div>`,
+        className: '',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
+    });
 }
 
 interface MapViewProps {
     reports: Report[];
     selectedCoords?: { lat: number; lng: number } | null;
+    userLocation?: { lat: number; lng: number } | null;
+    radiusKm?: number | null;
     onMapClick?: (lat: number, lng: number) => void;
     onReportClick?: (reportId: number) => void;
     className?: string;
 }
 
-export default function MapView({ reports, selectedCoords, onMapClick, onReportClick, className }: MapViewProps) {
+export interface MapViewHandle {
+    getCenter: () => { lat: number; lng: number };
+    flyTo: (lat: number, lng: number, zoom?: number) => void;
+}
+
+const MapView = forwardRef<MapViewHandle, MapViewProps>(function MapView(
+    { reports, selectedCoords, userLocation, radiusKm, onMapClick, onReportClick, className },
+    ref,
+) {
     const containerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<L.Map | null>(null);
-    const markersLayerRef = useRef<L.LayerGroup | null>(null);
+    const markersLayerRef = useRef<L.MarkerClusterGroup | null>(null);
     const selectedMarkerRef = useRef<L.Marker | null>(null);
+    const myLocationMarkerRef = useRef<L.Marker | null>(null);
+    const radiusCircleRef = useRef<L.Circle | null>(null);
+    const radiusPulseRef = useRef<L.Circle | null>(null);
+    const radiusAnimRef = useRef<number | null>(null);
+
+    useImperativeHandle(ref, () => ({
+        getCenter: () => {
+            const center = mapRef.current?.getCenter() ?? { lat: DEFAULT_CENTER[0], lng: DEFAULT_CENTER[1] };
+            return { lat: center.lat, lng: center.lng };
+        },
+        flyTo: (lat, lng, zoom = 16) => {
+            mapRef.current?.flyTo([lat, lng], zoom, { duration: 1 });
+        },
+    }));
 
     useEffect(() => {
         if (!containerRef.current || mapRef.current) return;
 
-        const map = L.map(containerRef.current, { zoomControl: false }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
+        const map = L.map(containerRef.current, { zoomControl: false, attributionControl: false }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
@@ -90,19 +137,19 @@ export default function MapView({ reports, selectedCoords, onMapClick, onReportC
         }).addTo(map);
 
         L.control.zoom({ position: 'bottomright' }).addTo(map);
+        // Own corner, away from the zoom control and the FAB, and clear of the locate button.
+        L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
 
         map.on('click', (e) => {
             onMapClick?.(e.latlng.lat, e.latlng.lng);
         });
 
-        map.on('popupopen', (e) => {
-            const btn = e.popup.getElement()?.querySelector<HTMLButtonElement>('[data-report-id]');
-            if (btn) {
-                btn.onclick = () => onReportClick?.(Number(btn.dataset.reportId));
-            }
+        markersLayerRef.current = L.markerClusterGroup({
+            spiderfyOnMaxZoom: true,
+            showCoverageOnHover: false,
+            maxClusterRadius: 50,
         });
-
-        markersLayerRef.current = L.layerGroup().addTo(map);
+        map.addLayer(markersLayerRef.current);
         mapRef.current = map;
 
         return () => {
@@ -123,12 +170,12 @@ export default function MapView({ reports, selectedCoords, onMapClick, onReportC
 
         reports.forEach((report) => {
             const marker = L.marker([report.latitude, report.longitude], {
-                icon: statusIcon(report.status),
+                icon: reportIcon(report),
             });
-            marker.bindPopup(popupContent(report), { maxWidth: 260 });
+            marker.on('click', () => onReportClick?.(report.id));
             layer.addLayer(marker);
         });
-    }, [reports]);
+    }, [reports, onReportClick]);
 
     // Update selected location marker
     useEffect(() => {
@@ -149,5 +196,98 @@ export default function MapView({ reports, selectedCoords, onMapClick, onReportC
         }
     }, [selectedCoords]);
 
+    // Live "you are here" marker — always visible, never recenters the map
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        if (!userLocation) {
+            myLocationMarkerRef.current?.remove();
+            myLocationMarkerRef.current = null;
+            return;
+        }
+
+        if (myLocationMarkerRef.current) {
+            myLocationMarkerRef.current.setLatLng([userLocation.lat, userLocation.lng]);
+        } else {
+            myLocationMarkerRef.current = L.marker([userLocation.lat, userLocation.lng], {
+                icon: myLocationIcon(),
+                interactive: false,
+                zIndexOffset: -100,
+            }).addTo(map);
+        }
+    }, [userLocation]);
+
+    // Search-radius circle around the user, with a looping "radar" pulse so it reads as a
+    // live scan rather than a static shape — makes it obvious what area is being searched.
+    useEffect(() => {
+        const map = mapRef.current;
+        if (!map) return;
+
+        function stopAnimation() {
+            if (radiusAnimRef.current !== null) {
+                cancelAnimationFrame(radiusAnimRef.current);
+                radiusAnimRef.current = null;
+            }
+        }
+
+        if (!userLocation || !radiusKm) {
+            radiusCircleRef.current?.remove();
+            radiusCircleRef.current = null;
+            radiusPulseRef.current?.remove();
+            radiusPulseRef.current = null;
+            stopAnimation();
+            return;
+        }
+
+        const center: L.LatLngExpression = [userLocation.lat, userLocation.lng];
+        const radiusMeters = radiusKm * 1000;
+
+        if (radiusCircleRef.current) {
+            radiusCircleRef.current.setLatLng(center).setRadius(radiusMeters);
+        } else {
+            radiusCircleRef.current = L.circle(center, {
+                radius: radiusMeters,
+                color: '#3b82f6',
+                weight: 1.5,
+                dashArray: '6 6',
+                fillColor: '#3b82f6',
+                fillOpacity: 0.05,
+                interactive: false,
+            }).addTo(map);
+        }
+
+        if (!radiusPulseRef.current) {
+            radiusPulseRef.current = L.circle(center, {
+                radius: 0,
+                color: '#60a5fa',
+                weight: 2,
+                fillColor: '#60a5fa',
+                fillOpacity: 0.12,
+                interactive: false,
+                className: 'radius-pulse-ring',
+            }).addTo(map);
+        }
+
+        const pulse = radiusPulseRef.current;
+        const DURATION = 2600;
+        let start: number | null = null;
+
+        function step(timestamp: number) {
+            if (start === null) start = timestamp;
+            const t = ((timestamp - start) % DURATION) / DURATION;
+            pulse!.setLatLng(center).setRadius(radiusMeters * t);
+            pulse!.setStyle({ opacity: 0.7 * (1 - t), fillOpacity: 0.12 * (1 - t) });
+            radiusAnimRef.current = requestAnimationFrame(step);
+        }
+
+        stopAnimation();
+        radiusAnimRef.current = requestAnimationFrame(step);
+
+        return stopAnimation;
+    }, [userLocation, radiusKm]);
+
     return <div ref={containerRef} className={className ?? 'h-full w-full'} />;
-}
+});
+
+export default MapView;

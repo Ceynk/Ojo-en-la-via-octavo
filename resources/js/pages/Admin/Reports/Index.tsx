@@ -3,7 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     Filter, Trash2, Eye, ChevronLeft, ChevronRight,
-    Heart, MessageSquare, Loader2,
+    Heart, MessageSquare, Loader2, Copy,
 } from 'lucide-react';
 import AdminLayout from '@/components/shared/AdminLayout';
 import StatusBadge from '@/components/reports/StatusBadge';
@@ -19,8 +19,10 @@ interface ReportsProps extends PageProps {
 const STATUS_OPTIONS: { value: ReportStatus | ''; label: string }[] = [
     { value: '', label: 'Todos los estados' },
     { value: 'pendiente', label: 'Pendiente' },
-    { value: 'en_revision', label: 'En revisión' },
     { value: 'notificado', label: 'Notificado' },
+    { value: 'en_camino', label: 'En camino' },
+    { value: 'en_revision', label: 'En revisión' },
+    { value: 'en_proceso', label: 'En proceso' },
     { value: 'resuelto', label: 'Resuelto' },
 ];
 
@@ -79,7 +81,7 @@ export default function AdminReportsIndex() {
                         className="rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
                     >
                         {STATUS_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
+                            <option key={o.value} value={o.value} className="bg-white text-gray-900">{o.label}</option>
                         ))}
                     </select>
 
@@ -91,9 +93,9 @@ export default function AdminReportsIndex() {
                         }}
                         className="rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
                     >
-                        <option value="">Todos los tipos</option>
+                        <option value="" className="bg-white text-gray-900">Todos los tipos</option>
                         {incident_types.map((t: IncidentType) => (
-                            <option key={t.id} value={t.id}>{t.name}</option>
+                            <option key={t.id} value={t.id} className="bg-white text-gray-900">{t.name}</option>
                         ))}
                     </select>
 
@@ -149,7 +151,19 @@ export default function AdminReportsIndex() {
                                         </td>
 
                                         <td className="max-w-[260px] px-5 py-3 text-secondary">
-                                            {truncate(report.description, 70)}
+                                            <div className="flex flex-col gap-1">
+                                                <span>{truncate(report.description, 70)}</span>
+                                                {report.possible_duplicate_of !== null && (
+                                                    <Link
+                                                        href={`/admin/reports/${report.possible_duplicate_of}`}
+                                                        className="inline-flex w-fit items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 transition-colors hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400"
+                                                    >
+                                                        <Copy className="h-2.5 w-2.5" />
+                                                        Posible duplicado ({Math.round((report.duplicate_similarity ?? 0) * 100)}%)
+                                                        {report.original_report ? ` — ver #${report.original_report.id}` : ''}
+                                                    </Link>
+                                                )}
+                                            </div>
                                         </td>
 
                                         <td className="whitespace-nowrap px-5 py-3 text-secondary">

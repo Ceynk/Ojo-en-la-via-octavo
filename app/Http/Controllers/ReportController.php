@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Events\ReportCreated;
+use App\Jobs\GenerateReportEmbedding;
+use App\Jobs\NotifyEntitiesOfReport;
 use App\Models\Report;
 use App\Models\ReportImage;
 use App\Services\NotificationService;
-use App\Services\EntityNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -19,12 +21,11 @@ class ReportController extends Controller
 {
     public function __construct(
         private NotificationService $notifications,
-        private EntityNotificationService $entityNotifications,
     ) {}
 
     public function index(Request $request): JsonResponse
     {
-        $query = Report::with(['user:id,name', 'incidentType:id,name', 'images'])
+        $query = Report::with(['user:id,first_name,last_name', 'incidentType:id,name', 'images'])
             ->withCount(['likes', 'comments'])
             ->withExists([
                 'likes as user_liked' => fn ($q) => $q->where('user_id', auth()->id()),
@@ -32,7 +33,12 @@ class ReportController extends Controller
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
             ->when($request->filled('incident_type_id'), fn ($q) => $q->where('incident_type_id', $request->incident_type_id))
             ->when($request->filled('search'), fn ($q) => $q->where('description', 'like', "%{$request->search}%"))
-            ->latest();
+            ->when($request->boolean('mine'), fn ($q) => $q->where('user_id', auth()->id()))
+            ->when(
+                $request->input('sort') === 'comments',
+                fn ($q) => $q->orderByDesc('comments_count')->latest(),
+                fn ($q) => $q->latest(),
+            );
 
         if ($request->boolean('paginate')) {
             return response()->json($query->paginate(12));
@@ -49,19 +55,44 @@ class ReportController extends Controller
             'latitude'         => ['required', 'numeric', 'between:-90,90'],
             'longitude'        => ['required', 'numeric', 'between:-180,180'],
             'address_text'     => ['required', 'string', 'max:300'],
-            'image'            => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'media'            => ['nullable', 'array'],
+            'media.*'          => ['file', 'mimetypes:image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm', 'max:51200'],
+            // Only populated when the citizen saw a possible-duplicate alert and chose to
+            // continue anyway (see ReportDuplicateController::check) — never trusted blindly
+            // as "the same report", just recorded for admins to review.
+            'possible_duplicate_of' => ['nullable', 'integer', 'exists:reports,id'],
+            'duplicate_similarity'  => ['nullable', 'numeric', 'between:0,1'],
         ]);
 
-        $report = $request->user()->reports()->create($data);
+        $report = $request->user()->reports()->create(collect($data)->except('media')->all());
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('reportes', 'public');
-            $report->images()->create(['path' => $path]);
+        $this->storeMediaFiles($report, $request);
+
+        // Entity notification is fire-and-forget: it's a queued job (see NotifyEntitiesOfReport),
+        // so dispatch() only inserts a queue row and returns — it doesn't send any mail here.
+        // The try/catch is just extra insurance so even a failure to enqueue (e.g. the queue
+        // connection being unreachable) can never fail report creation for the citizen.
+        try {
+            NotifyEntitiesOfReport::dispatch($report);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to dispatch NotifyEntitiesOfReport', ['report_id' => $report->id, 'error' => $e->getMessage()]);
         }
 
-        $this->entityNotifications->dispatch($report);
+        // Also fire-and-forget: precomputes the embedding used for future duplicate checks.
+        // A failure to enqueue must never fail report creation for the citizen.
+        try {
+            GenerateReportEmbedding::dispatch($report);
+        } catch (\Throwable $e) {
+            Log::warning('Failed to dispatch GenerateReportEmbedding', ['report_id' => $report->id, 'error' => $e->getMessage()]);
+        }
 
-        broadcast(new ReportCreated($report->load(['incidentType:id,name', 'user:id,name'])));
+        // Real-time push is best-effort — the report is already saved, so a broadcast
+        // outage (e.g. the websocket server being down) must not fail the whole request.
+        try {
+            broadcast(new ReportCreated($report->load(['incidentType:id,name', 'user:id,first_name,last_name'])));
+        } catch (\Throwable $e) {
+            Log::warning('Broadcast failed for ReportCreated', ['report_id' => $report->id, 'error' => $e->getMessage()]);
+        }
 
         return redirect()->route('citizen.home')->with('success', 'Reporte creado exitosamente.');
     }
@@ -69,10 +100,10 @@ class ReportController extends Controller
     public function show(Report $report): JsonResponse
     {
         $report->load([
-            'user:id,name,profile_photo',
+            'user:id,first_name,last_name,profile_photo',
             'incidentType:id,name',
             'images',
-            'statusHistory.changedBy:id,name',
+            'statusHistory.changedBy:id,first_name,last_name',
         ]);
 
         $report->loadCount(['likes', 'comments']);
@@ -91,17 +122,31 @@ class ReportController extends Controller
             'latitude'         => ['required', 'numeric', 'between:-90,90'],
             'longitude'        => ['required', 'numeric', 'between:-180,180'],
             'address_text'     => ['required', 'string', 'max:300'],
-            'image'            => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'media'            => ['nullable', 'array'],
+            'media.*'          => ['file', 'mimetypes:image/jpeg,image/png,image/webp,video/mp4,video/quicktime,video/webm', 'max:51200'],
         ]);
 
-        $report->update(array_merge($data, ['is_edited' => true, 'edited_at' => now()]));
+        $report->update(array_merge(collect($data)->except('media')->all(), ['is_edited' => true, 'edited_at' => now()]));
 
-        if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('reportes', 'public');
-            $report->images()->create(['path' => $path]);
-        }
+        $this->storeMediaFiles($report, $request);
 
         return back()->with('success', 'Reporte actualizado.');
+    }
+
+    /**
+     * Persists every uploaded photo/video as its own ReportImage row, in the order the
+     * citizen attached them — that insertion order is what lets the AI services reliably
+     * pick "the first photo" later (see DuplicateDetectionService::generateEmbeddingForReport).
+     */
+    private function storeMediaFiles(Report $report, Request $request): void
+    {
+        foreach ($request->file('media', []) as $file) {
+            $path = $file->store('reportes', 'public');
+            $report->images()->create([
+                'path' => $path,
+                'type' => str_starts_with($file->getMimeType(), 'video/') ? 'video' : 'image',
+            ]);
+        }
     }
 
     public function destroy(Report $report): RedirectResponse

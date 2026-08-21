@@ -4,18 +4,22 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePage } from '@inertiajs/react';
 import {
     X, Heart, MessageSquare, MapPin, Calendar, Pencil,
-    ChevronLeft, ChevronRight, Loader2, AlertTriangle,
+    ChevronLeft, ChevronRight, Loader2, AlertTriangle, Maximize2,
 } from 'lucide-react';
 import axios from 'axios';
-import { cn, formatRelativeTime, getStorageUrl } from '@/lib/utils';
+import { cn, formatRelativeTime, getStorageUrl, sortCommentsByPriority, STATUS_LABELS } from '@/lib/utils';
 import CommentItem from './CommentItem';
 import CommentForm from './CommentForm';
 import StatusBadge from './StatusBadge';
-import type { Comment, Report, PageProps } from '@/types';
+import StatusTimeline from './StatusTimeline';
+import MediaLightbox from './MediaLightbox';
+import type { Comment, Report, ReportStatus, PageProps, ReportImage } from '@/types';
 
 interface ReportDrawerProps {
     reportId: number | null;
     onClose: () => void;
+    /** Entity/operator views read "notificado" as confusing ("notified to whom?") — let callers swap the whole label set (used for both the header badge and the status timeline steps). */
+    statusLabels?: Record<ReportStatus, string>;
 }
 
 interface CommentsResponse {
@@ -23,7 +27,7 @@ interface CommentsResponse {
     total: number;
 }
 
-export default function ReportDrawer({ reportId, onClose }: ReportDrawerProps) {
+export default function ReportDrawer({ reportId, onClose, statusLabels }: ReportDrawerProps) {
     const { auth } = usePage<PageProps>().props;
     const queryClient = useQueryClient();
 
@@ -47,17 +51,19 @@ export default function ReportDrawer({ reportId, onClose }: ReportDrawerProps) {
     const [liked, setLiked] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [liking, setLiking] = useState(false);
+    const [lightbox, setLightbox] = useState<ReportImage | null>(null);
 
     // Reset when report changes
     useEffect(() => {
         setImageIndex(0);
         setLiked(report?.user_liked ?? false);
         setLikesCount(report?.likes_count ?? 0);
+        setLightbox(null);
     }, [report?.id]);
 
     // Sync comments
     useEffect(() => {
-        if (commentsData) setComments(commentsData.comments);
+        if (commentsData) setComments(sortCommentsByPriority(commentsData.comments));
     }, [commentsData]);
 
     async function toggleReportLike() {
@@ -78,7 +84,7 @@ export default function ReportDrawer({ reportId, onClose }: ReportDrawerProps) {
     }
 
     const handleCommentPosted = useCallback((comment: Comment) => {
-        setComments((prev) => [comment, ...prev]);
+        setComments((prev) => sortCommentsByPriority([comment, ...prev]));
     }, []);
 
     const handleReplyPosted = useCallback((reply: Comment, parentId: number) => {
@@ -122,6 +128,7 @@ export default function ReportDrawer({ reportId, onClose }: ReportDrawerProps) {
     const images = report?.images ?? [];
 
     return (
+        <>
         <AnimatePresence>
             {reportId !== null && (
                 <>
@@ -131,7 +138,7 @@ export default function ReportDrawer({ reportId, onClose }: ReportDrawerProps) {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={onClose}
-                        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+                        className="fixed inset-0 z-[1100] bg-black/40 backdrop-blur-sm"
                     />
 
                     {/* Drawer panel */}
@@ -140,12 +147,12 @@ export default function ReportDrawer({ reportId, onClose }: ReportDrawerProps) {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-                        className="fixed right-0 top-0 z-50 flex h-full w-full max-w-lg flex-col bg-surface-primary shadow-[var(--shadow-modal)]"
+                        className="fixed right-0 top-0 z-[1200] flex h-full w-full max-w-lg flex-col bg-surface-primary shadow-[var(--shadow-modal)]"
                     >
                         {/* Header */}
                         <div className="flex shrink-0 items-center justify-between border-b border-default px-5 py-4">
                             <div className="flex items-center gap-3">
-                                {report && <StatusBadge status={report.status} />}
+                                {report && <StatusBadge status={report.status} labelOverride={(statusLabels ?? STATUS_LABELS)[report.status]} />}
                                 <span className="text-sm font-semibold text-primary">
                                     {report?.incident_type?.name ?? 'Reporte'}
                                 </span>
@@ -174,11 +181,34 @@ export default function ReportDrawer({ reportId, onClose }: ReportDrawerProps) {
                                     {/* Image gallery */}
                                     {images.length > 0 && (
                                         <div className="relative aspect-video w-full bg-surface-tertiary shrink-0">
-                                            <img
-                                                src={getStorageUrl(images[imageIndex].path)}
-                                                alt={`Foto ${imageIndex + 1}`}
-                                                className="h-full w-full object-cover"
-                                            />
+                                            {images[imageIndex].type === 'video' ? (
+                                                <>
+                                                    <video
+                                                        key={images[imageIndex].id}
+                                                        src={getStorageUrl(images[imageIndex].path)}
+                                                        controls
+                                                        className="h-full w-full bg-black object-contain"
+                                                    />
+                                                    <button
+                                                        onClick={() => setLightbox(images[imageIndex])}
+                                                        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+                                                        title="Ver en grande"
+                                                    >
+                                                        <Maximize2 className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </>
+                                            ) : (
+                                                <button
+                                                    onClick={() => setLightbox(images[imageIndex])}
+                                                    className="block h-full w-full cursor-pointer"
+                                                >
+                                                    <img
+                                                        src={getStorageUrl(images[imageIndex].path)}
+                                                        alt={`Foto ${imageIndex + 1}`}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                </button>
+                                            )}
                                             {images.length > 1 && (
                                                 <>
                                                     <button
@@ -269,6 +299,14 @@ export default function ReportDrawer({ reportId, onClose }: ReportDrawerProps) {
                                         </div>
                                     </div>
 
+                                    {/* Status timeline */}
+                                    <div className="border-t border-default px-5 py-5">
+                                        <h3 className="mb-4 text-sm font-semibold text-primary">
+                                            Historial del reporte
+                                        </h3>
+                                        <StatusTimeline report={report} labels={statusLabels} />
+                                    </div>
+
                                     {/* Comments */}
                                     <div className="border-t border-default px-5 py-5">
                                         <h3 className="mb-4 text-sm font-semibold text-primary">
@@ -322,5 +360,8 @@ export default function ReportDrawer({ reportId, onClose }: ReportDrawerProps) {
                 </>
             )}
         </AnimatePresence>
+
+        <MediaLightbox media={lightbox} onClose={() => setLightbox(null)} />
+        </>
     );
 }

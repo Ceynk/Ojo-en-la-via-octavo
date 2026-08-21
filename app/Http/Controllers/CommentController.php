@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Comment;
+use App\Models\Entity;
 use App\Models\Report;
 use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
@@ -16,10 +17,21 @@ class CommentController extends Controller
     public function index(Report $report): JsonResponse
     {
         $comments = $report->comments()
-            ->with(['user:id,name,profile_photo', 'likes', 'replies.user:id,name,profile_photo', 'replies.likes'])
+            ->with([
+                'user:id,first_name,last_name,profile_photo,role,entity_id',
+                'user.entity:id,name',
+                'likes',
+                'replies.user:id,first_name,last_name,profile_photo,role,entity_id',
+                'replies.user.entity:id,name',
+                'replies.likes',
+            ])
             ->withCount('likes')
             ->where('is_deleted', false)
             ->get()
+            // Admin and entity comments carry priority/authority context, so they surface
+            // first regardless of when they were posted.
+            ->sortBy(fn ($c) => in_array($c->user?->role, ['admin', 'entity'], true) ? 0 : 1)
+            ->values()
             ->map(fn ($c) => $this->formatComment($c, auth()->id()));
 
         return response()->json([
@@ -40,7 +52,7 @@ class CommentController extends Controller
             'user_id' => $request->user()->id,
         ]);
 
-        $comment->load('user:id,name,profile_photo');
+        $comment->load(['user:id,first_name,last_name,profile_photo,role,entity_id', 'user.entity:id,name']);
 
         // Notify report owner
         if ($report->user_id !== $request->user()->id) {
@@ -69,6 +81,12 @@ class CommentController extends Controller
                     commentId: $comment->id,
                 );
             }
+        }
+
+        // Notify entities that handle this report's incident type
+        $entities = Entity::active()->forIncidentType($report->incident_type_id)->get();
+        foreach ($entities as $entity) {
+            $this->notifications->notifyEntityNewComment($entity, $report, $comment, $request->user()->id);
         }
 
         return response()->json(['ok' => true, 'comment' => $comment]);

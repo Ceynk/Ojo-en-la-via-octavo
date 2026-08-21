@@ -13,9 +13,4 @@ class IncidentType extends Model
     {
         return $this->hasMany(Report::class);
     }
-
-    public function notificationRules(): HasMany
-    {
-        return $this->hasMany(NotificationRule::class);
-    }
 }

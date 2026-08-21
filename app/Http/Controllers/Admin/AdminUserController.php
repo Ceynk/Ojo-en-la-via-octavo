@@ -13,11 +13,11 @@ class AdminUserController extends Controller
 {
     public function index(Request $request): Response
     {
-        $users = User::where('role', 'ciudadano')
-            ->when($request->filled('search'), fn ($q) => $q->where(function ($q) use ($request) {
-                $q->where('name', 'like', "%{$request->search}%")
-                    ->orWhere('email', 'like', "%{$request->search}%");
-            }))
+        $users = User::when($request->filled('search'), fn ($q) => $q->where(function ($q) use ($request) {
+            $q->where('first_name', 'like', "%{$request->search}%")
+                ->orWhere('last_name', 'like', "%{$request->search}%")
+                ->orWhere('email', 'like', "%{$request->search}%");
+        }))
             ->withCount('reports')
             ->orderBy('created_at', 'desc')
             ->paginate(20)
@@ -31,6 +31,10 @@ class AdminUserController extends Controller
 
     public function toggle(Request $request, User $user): RedirectResponse
     {
+        if ($user->isAdmin()) {
+            return back()->withErrors(['user' => 'No puedes editar cuentas de administrador.']);
+        }
+
         $user->update(['is_active' => !$user->is_active]);
 
         return back()->with('success', 'Estado del usuario actualizado.');
@@ -38,8 +42,8 @@ class AdminUserController extends Controller
 
     public function changeRole(Request $request, User $user): RedirectResponse
     {
-        if ($user->id === $request->user()->id) {
-            return back()->withErrors(['role' => 'No puedes cambiar tu propio rol.']);
+        if ($user->isAdmin()) {
+            return back()->withErrors(['role' => 'No puedes editar cuentas de administrador.']);
         }
 
         $data = $request->validate([

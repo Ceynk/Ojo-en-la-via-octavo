@@ -8,6 +8,7 @@ use App\Services\NotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 
 class NotificationController extends Controller
@@ -18,7 +19,7 @@ class NotificationController extends Controller
     {
         $notifications = $request->user()
             ->notifications()
-            ->with(['actor:id,name,profile_photo', 'report:id,description,status'])
+            ->with(['actor:id,first_name,last_name,profile_photo', 'report:id,description,status'])
             ->latest()
             ->paginate(20);
 
@@ -27,7 +28,7 @@ class NotificationController extends Controller
 
     public function markRead(Notification $notification): JsonResponse
     {
-        $this->authorize('update', $notification);
+        Gate::authorize('update', $notification);
 
         $notification->markAsRead();
 
@@ -70,8 +71,8 @@ class NotificationController extends Controller
     {
         return Inertia::render('Admin/Notifications/Index', [
             'users' => User::where('is_active', true)
-                ->select('id', 'name', 'email')
-                ->orderBy('name')
+                ->select('id', 'first_name', 'last_name', 'email')
+                ->orderBy('first_name')
                 ->get(),
         ]);
     }

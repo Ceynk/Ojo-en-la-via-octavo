@@ -20,7 +20,7 @@ class AdminDashboardController extends Controller
             'active_users'     => User::where('role', 'ciudadano')->where('is_active', true)->count(),
         ];
 
-        $recent_reports = Report::with(['user:id,name', 'incidentType:id,name'])
+        $recent_reports = Report::with(['user:id,first_name,last_name', 'incidentType:id,name'])
             ->withCount('likes')
             ->latest()
             ->limit(10)

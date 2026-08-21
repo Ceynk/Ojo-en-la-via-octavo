@@ -13,11 +13,12 @@ class AdminUserSeeder extends Seeder
         User::firstOrCreate(
             ['email' => 'admin@ojoenlavia.co'],
             [
-                'name'     => 'Administrador',
-                'phone'    => '3000000000',
-                'password' => Hash::make('Admin2024!'),
-                'role'     => 'admin',
-                'is_active' => true,
+                'first_name' => 'Administrador',
+                'last_name'  => '',
+                'phone'      => '3000000000',
+                'password'   => Hash::make('Admin2024!'),
+                'role'       => 'admin',
+                'is_active'  => true,
             ]
         );
     }

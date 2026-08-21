@@ -43,11 +43,11 @@ class AdminAnalyticsController extends Controller
                 ->get();
 
             $activeUsers = User::where('role', 'ciudadano')
+                ->whereHas('reports', fn ($q) => $q->where('created_at', '>=', $from))
                 ->withCount(['reports' => fn ($q) => $q->where('created_at', '>=', $from)])
-                ->having('reports_count', '>', 0)
                 ->orderByDesc('reports_count')
                 ->limit(10)
-                ->get(['id', 'name', 'email', 'is_active']);
+                ->get(['id', 'first_name', 'last_name', 'email', 'is_active']);
 
             return compact('reportsByType', 'byStatus', 'trend', 'activeUsers');
         });

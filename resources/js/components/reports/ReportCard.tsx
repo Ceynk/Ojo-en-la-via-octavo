@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Heart, MessageSquare, MapPin, Pencil } from 'lucide-react';
+import { Heart, MessageSquare, MapPin, Pencil, Play } from 'lucide-react';
 import axios from 'axios';
-import { cn, formatRelativeTime, getStorageUrl, truncate } from '@/lib/utils';
+import { cn, formatDistanceKm, formatRelativeTime, getStorageUrl, truncate } from '@/lib/utils';
+import { getIncidentTypeStyle } from '@/lib/incidentTypeStyle';
 import StatusBadge from './StatusBadge';
 import type { Report, PageProps } from '@/types';
 import { usePage } from '@inertiajs/react';
@@ -10,9 +11,10 @@ import { usePage } from '@inertiajs/react';
 interface ReportCardProps {
     report: Report;
     onReportClick?: (report: Report) => void;
+    distanceKm?: number;
 }
 
-export default function ReportCard({ report, onReportClick }: ReportCardProps) {
+export default function ReportCard({ report, onReportClick, distanceKm }: ReportCardProps) {
     const { auth } = usePage<PageProps>().props;
     const [liked, setLiked] = useState(report.user_liked ?? false);
     const [likesCount, setLikesCount] = useState(report.likes_count ?? 0);
@@ -54,12 +56,28 @@ export default function ReportCard({ report, onReportClick }: ReportCardProps) {
             {/* Image */}
             <div className="relative aspect-video w-full overflow-hidden rounded-t-xl bg-surface-tertiary">
                 {image ? (
-                    <img
-                        src={getStorageUrl(image.path)}
-                        alt="Foto del reporte"
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                    />
+                    image.type === 'video' ? (
+                        <div className="relative h-full w-full">
+                            <video
+                                src={getStorageUrl(image.path)}
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                preload="metadata"
+                                muted
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white">
+                                    <Play className="h-4 w-4 fill-current" />
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <img
+                            src={getStorageUrl(image.path)}
+                            alt="Foto del reporte"
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            loading="lazy"
+                        />
+                    )
                 ) : (
                     <div className="flex h-full w-full items-center justify-center">
                         <MapPin className="h-8 w-8 text-muted opacity-30" />
@@ -72,13 +90,20 @@ export default function ReportCard({ report, onReportClick }: ReportCardProps) {
                 </div>
 
                 {/* Incident type chip */}
-                {report.incident_type && (
-                    <div className="absolute right-3 top-3">
-                        <span className="rounded-full bg-black/50 px-2 py-0.5 text-[11px] font-medium text-white backdrop-blur-sm">
-                            {report.incident_type.name}
-                        </span>
-                    </div>
-                )}
+                {report.incident_type && (() => {
+                    const { color, Icon } = getIncidentTypeStyle(report.incident_type);
+                    return (
+                        <div className="absolute right-3 top-3">
+                            <span
+                                style={{ backgroundColor: color }}
+                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-white shadow-sm"
+                            >
+                                <Icon className="h-3 w-3" />
+                                {report.incident_type.name}
+                            </span>
+                        </div>
+                    );
+                })()}
             </div>
 
             {/* Content */}
@@ -93,6 +118,11 @@ export default function ReportCard({ report, onReportClick }: ReportCardProps) {
                     <p className="flex items-center gap-1 text-xs text-muted">
                         <MapPin className="h-3 w-3 shrink-0" />
                         {truncate(report.address_text, 60)}
+                        {distanceKm !== undefined && (
+                            <span className="ml-1 shrink-0 text-brand-500">
+                                · {formatDistanceKm(distanceKm)}
+                            </span>
+                        )}
                     </p>
                 )}
 

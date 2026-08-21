@@ -139,8 +139,9 @@ export default function UsersIndex() {
                                         {/* Toggle active */}
                                         <td className="px-5 py-3">
                                             <button
-                                                onClick={() => toggleUser(user)}
-                                                disabled={togglingId === user.id}
+                                                onClick={() => user.role !== 'admin' && toggleUser(user)}
+                                                disabled={user.role === 'admin' || togglingId === user.id}
+                                                title={user.role === 'admin' ? 'No puedes editar cuentas de administrador' : undefined}
                                                 className={cn(
                                                     'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors',
                                                     user.is_active
@@ -176,15 +177,17 @@ export default function UsersIndex() {
                                                     )}
                                                     {user.role}
                                                 </span>
-                                                <select
-                                                    value={user.role}
-                                                    onChange={(e) => changeRole(user, e.target.value as 'ciudadano' | 'admin')}
-                                                    disabled={changingRoleId === user.id}
-                                                    className="rounded border border-default bg-surface-primary py-0.5 pl-1 pr-5 text-[11px] text-secondary outline-none focus:border-brand-500 disabled:opacity-50"
-                                                >
-                                                    <option value="ciudadano">ciudadano</option>
-                                                    <option value="admin">admin</option>
-                                                </select>
+                                                {user.role !== 'admin' && (
+                                                    <select
+                                                        value={user.role}
+                                                        onChange={(e) => changeRole(user, e.target.value as 'ciudadano' | 'admin')}
+                                                        disabled={changingRoleId === user.id}
+                                                        className="rounded border border-default bg-surface-primary py-0.5 pl-1 pr-5 text-[11px] text-secondary outline-none focus:border-brand-500 disabled:opacity-50"
+                                                    >
+                                                        <option value="ciudadano" className="bg-white text-gray-900">ciudadano</option>
+                                                        <option value="admin" className="bg-white text-gray-900">admin</option>
+                                                    </select>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

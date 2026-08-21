@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ReportStatusHistory extends Model
 {
+    protected $table = 'report_status_history';
+
     protected $fillable = [
         'report_id',
         'previous_status',
         'new_status',
         'changed_by_user_id',
-        'changed_by_entity',
         'notes',
     ];
 

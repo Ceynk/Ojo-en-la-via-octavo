@@ -42,27 +42,16 @@
 
 @layer base {
     :root {
-        color-scheme: light;
-        --bg-primary: #ffffff;
-        --bg-secondary: #f8fafc;
-        --bg-tertiary: #f1f5f9;
-        --border-default: #e2e8f0;
-        --border-muted: #f1f5f9;
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-muted: #94a3b8;
-    }
-
-    .dark {
         color-scheme: dark;
-        --bg-primary: #0f172a;
-        --bg-secondary: #1e293b;
-        --bg-tertiary: #334155;
-        --border-default: #334155;
-        --border-muted: #1e293b;
-        --text-primary: #f8fafc;
-        --text-secondary: #cbd5e1;
-        --text-muted: #64748b;
+        /* Glass theme — used everywhere, on top of the blurred city background */
+        --bg-primary: rgba(255, 255, 255, 0.06);
+        --bg-secondary: transparent;
+        --bg-tertiary: rgba(255, 255, 255, 0.12);
+        --border-default: rgba(255, 255, 255, 0.15);
+        --border-muted: rgba(255, 255, 255, 0.08);
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.75);
+        --text-muted: rgba(255, 255, 255, 0.5);
     }
 
     * {
@@ -74,11 +63,28 @@
     }
 
     body {
-        background-color: var(--bg-secondary);
+        position: relative;
+        background-color: #0f172a;
+        background-image:
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.65)),
+            url('/Fondo/fondo-login.png');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
         color: var(--text-primary);
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+    }
+
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        pointer-events: none;
     }
 }
 
@@ -95,9 +101,17 @@
         border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
-    .bg-surface-primary { background-color: var(--bg-primary); }
+    .bg-surface-primary {
+        background-color: var(--bg-primary);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
     .bg-surface-secondary { background-color: var(--bg-secondary); }
-    .bg-surface-tertiary { background-color: var(--bg-tertiary); }
+    .bg-surface-tertiary {
+        background-color: var(--bg-tertiary);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
     .border-default { border-color: var(--border-default); }
     .text-primary { color: var(--text-primary); }
     .text-secondary { color: var(--text-secondary); }
@@ -146,4 +160,75 @@
         color: #34d399;
         background-color: rgba(52, 211, 153, 0.15);
     }
+    .status-en_camino {
+        color: #0369a1;
+        background-color: #e0f2fe;
+    }
+    .dark .status-en_camino {
+        color: #38bdf8;
+        background-color: rgba(56, 189, 248, 0.15);
+    }
+    .status-en_proceso {
+        color: #c2410c;
+        background-color: #ffedd5;
+    }
+    .dark .status-en_proceso {
+        color: #fb923c;
+        background-color: rgba(251, 146, 60, 0.15);
+    }
+}
+
+/* Enlarge Leaflet's zoom control to a proper touch target (min 44x44px) on mobile. */
+@media (max-width: 768px) {
+    .leaflet-control-zoom a {
+        width: 44px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+        font-size: 20px !important;
+    }
+}
+
+/* Map page: lift the zoom control above the FAB (button + its label) so the bottom-right
+   corner doesn't get crowded. */
+.map-canvas .leaflet-bottom.leaflet-right {
+    margin-bottom: 7.5rem;
+    margin-right: 0.75rem;
+}
+
+.map-canvas .leaflet-control-zoom {
+    border-radius: 9999px !important;
+    overflow: hidden;
+    box-shadow: var(--shadow-elevated) !important;
+}
+
+/* Attribution moves to its own corner (bottom-left, past the locate button) and matches the
+   app's dark glass controls instead of Leaflet's default white box. */
+.map-canvas .leaflet-bottom.leaflet-left {
+    margin-left: 4.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.map-canvas .leaflet-control-attribution {
+    background: rgba(15, 23, 42, 0.75) !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 9999px;
+    padding: 3px 10px;
+    font-size: 10px;
+    box-shadow: var(--shadow-card);
+}
+
+.map-canvas .leaflet-control-attribution a {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* "You are here" live location dot */
+@keyframes my-location-pulse {
+    0% { transform: scale(0.6); opacity: 0.7; }
+    70% { transform: scale(2); opacity: 0; }
+    100% { transform: scale(2); opacity: 0; }
+}
+.my-location-pulse {
+    animation: my-location-pulse 2s ease-out infinite;
 }

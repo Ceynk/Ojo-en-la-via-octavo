@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router } from '@inertiajs/react';
 import {
     Bell, MessageSquare, Heart, RefreshCw, Reply, CheckCheck,
-    X, Loader2, BellOff,
+    X, Loader2, BellOff, FileText,
 } from 'lucide-react';
 import axios from 'axios';
 import { cn, formatRelativeTime } from '@/lib/utils';
@@ -17,6 +17,8 @@ const TYPE_ICON: Record<NotificationType, React.ElementType> = {
     like_comentario: Heart,
     estado_reporte: RefreshCw,
     admin_mensaje: Bell,
+    nuevo_reporte_entidad: FileText,
+    comentario_entidad: MessageSquare,
 };
 
 const TYPE_COLOR: Record<NotificationType, string> = {
@@ -26,6 +28,8 @@ const TYPE_COLOR: Record<NotificationType, string> = {
     like_comentario: 'bg-red-100 text-red-500 dark:bg-red-900/30 dark:text-red-400',
     estado_reporte: 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400',
     admin_mensaje: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
+    nuevo_reporte_entidad: 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400',
+    comentario_entidad: 'bg-brand-100 text-brand-600 dark:bg-brand-900/40 dark:text-brand-400',
 };
 
 interface NotificationPanelProps {
@@ -119,13 +123,13 @@ export default function NotificationPanel({ open, onClose, onReportOpen }: Notif
                     transition={{ duration: 0.18, ease: 'easeOut' }}
                     className={cn(
                         'absolute right-0 top-full z-50 mt-2 w-80 sm:w-96',
-                        'rounded-xl border border-default bg-surface-primary shadow-[var(--shadow-modal)]',
+                        'rounded-xl border border-white/10 bg-slate-900/95 text-white shadow-[var(--shadow-modal)] backdrop-blur-md',
                     )}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-default px-4 py-3">
+                    <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-primary">Notificaciones</span>
+                            <span className="text-sm font-semibold text-white">Notificaciones</span>
                             {unreadCount > 0 && (
                                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
                                     {unreadCount}
@@ -137,7 +141,7 @@ export default function NotificationPanel({ open, onClose, onReportOpen }: Notif
                                 <button
                                     onClick={markAllRead}
                                     disabled={markingAll}
-                                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-muted transition-colors hover:bg-surface-tertiary hover:text-primary disabled:opacity-50"
+                                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-white/60 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
                                     title="Marcar todas como leídas"
                                 >
                                     {markingAll ? (
@@ -150,7 +154,7 @@ export default function NotificationPanel({ open, onClose, onReportOpen }: Notif
                             )}
                             <button
                                 onClick={onClose}
-                                className="flex h-7 w-7 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-tertiary hover:text-primary"
+                                className="flex h-7 w-7 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/10 hover:text-white"
                             >
                                 <X className="h-3.5 w-3.5" />
                             </button>
@@ -161,15 +165,15 @@ export default function NotificationPanel({ open, onClose, onReportOpen }: Notif
                     <div className="max-h-[420px] overflow-y-auto">
                         {isLoading ? (
                             <div className="flex items-center justify-center py-10">
-                                <Loader2 className="h-6 w-6 animate-spin text-brand-600" />
+                                <Loader2 className="h-6 w-6 animate-spin text-brand-400" />
                             </div>
                         ) : notifications.length === 0 ? (
                             <div className="flex flex-col items-center py-10 text-center">
-                                <BellOff className="mb-2 h-8 w-8 text-muted opacity-40" />
-                                <p className="text-sm text-muted">Sin notificaciones</p>
+                                <BellOff className="mb-2 h-8 w-8 text-white/40" />
+                                <p className="text-sm text-white/50">Sin notificaciones</p>
                             </div>
                         ) : (
-                            <ul className="divide-y divide-default">
+                            <ul className="divide-y divide-white/10">
                                 {notifications.map((notification) => {
                                     const Icon = TYPE_ICON[notification.type] ?? Bell;
                                     const isRead = !!(notification.read_at || readIds.has(notification.id));
@@ -182,9 +186,7 @@ export default function NotificationPanel({ open, onClose, onReportOpen }: Notif
                                                 onClick={() => handleNotificationClick(notification)}
                                                 className={cn(
                                                     'flex w-full items-start gap-3 px-4 py-3 text-left transition-colors',
-                                                    isRead
-                                                        ? 'hover:bg-surface-tertiary'
-                                                        : 'bg-brand-50/50 hover:bg-brand-50 dark:bg-brand-950/20 dark:hover:bg-brand-950/30',
+                                                    isRead ? 'hover:bg-white/5' : 'bg-brand-500/10 hover:bg-brand-500/15',
                                                     !isClickable && 'cursor-default',
                                                 )}
                                             >
@@ -203,20 +205,20 @@ export default function NotificationPanel({ open, onClose, onReportOpen }: Notif
                                                     <p
                                                         className={cn(
                                                             'text-xs leading-relaxed',
-                                                            isRead ? 'text-secondary' : 'text-primary font-medium',
+                                                            isRead ? 'text-white/60' : 'font-medium text-white',
                                                         )}
                                                     >
                                                         <span className="font-semibold">{notification.title}: </span>
                                                         {notification.message}
                                                     </p>
-                                                    <p className="mt-0.5 text-[10px] text-muted">
+                                                    <p className="mt-0.5 text-[10px] text-white/40">
                                                         {formatRelativeTime(notification.created_at)}
                                                     </p>
                                                 </div>
 
                                                 {/* Unread dot */}
                                                 {!isRead && (
-                                                    <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand-600" />
+                                                    <div className="mt-2 h-2 w-2 shrink-0 rounded-full bg-brand-500" />
                                                 )}
                                             </button>
                                         </li>
@@ -228,8 +230,8 @@ export default function NotificationPanel({ open, onClose, onReportOpen }: Notif
 
                     {/* Footer */}
                     {(data?.last_page ?? 1) > 1 && (
-                        <div className="border-t border-default px-4 py-2">
-                            <p className="text-center text-xs text-muted">
+                        <div className="border-t border-white/10 px-4 py-2">
+                            <p className="text-center text-xs text-white/40">
                                 Mostrando las 20 más recientes
                             </p>
                         </div>

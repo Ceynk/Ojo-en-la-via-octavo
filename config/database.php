@@ -38,9 +38,13 @@ return [
             'database' => env('DB_DATABASE', database_path('database.sqlite')),
             'prefix' => '',
             'foreign_key_constraints' => env('DB_FOREIGN_KEYS', true),
-            'busy_timeout' => null,
-            'journal_mode' => null,
-            'synchronous' => null,
+            // Defaults were null: the queue worker (mail, embeddings, broadcasts) and
+            // the web server both write to the same SQLite file, and without WAL +
+            // a busy timeout a concurrent write fails immediately as "database is
+            // locked" instead of waiting — this silently dropped queued jobs.
+            'busy_timeout' => 5000,
+            'journal_mode' => 'wal',
+            'synchronous' => 'normal',
             'transaction_mode' => 'DEFERRED',
         ],
 

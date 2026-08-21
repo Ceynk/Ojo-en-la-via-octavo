@@ -25,16 +25,12 @@ class PasswordResetMail extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
-        $url = url('/reset-password/' . $this->token);
-
         return new Content(
-            htmlString: "
-                <h2>Hola, {$this->userName}</h2>
-                <p>Recibiste este email porque solicitaste restablecer tu contraseña.</p>
-                <p><a href='{$url}' style='background:#2563eb;color:#fff;padding:12px 24px;text-decoration:none;border-radius:8px;display:inline-block;margin:16px 0'>Restablecer contraseña</a></p>
-                <p>Este enlace expira en 1 hora. Si no solicitaste esto, ignora este email.</p>
-                <p>— El equipo de Ojo en la Vía</p>
-            ",
+            view: 'emails.password-reset',
+            with: [
+                'userName' => $this->userName,
+                'resetUrl' => url('/reset-password/' . $this->token),
+            ],
         );
     }
 }
