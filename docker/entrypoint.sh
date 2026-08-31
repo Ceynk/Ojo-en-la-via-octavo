@@ -14,12 +14,22 @@ if [ ! -f /var/www/html/database/database.sqlite ]; then
     touch /var/www/html/database/database.sqlite
 fi
 
+# Ajustar permisos iniciales
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
-chmod 664 /var/www/html/database/database.sqlite
+chmod 664 /var/www/html/database/database.sqlite 2>/dev/null || true
 
 # Crear enlace simbólico de storage
 php /var/www/html/artisan storage:link --force || true
+
+# Ejecutar migraciones automáticas para crear tablas (jobs, sessions, cache, users, etc.)
+echo "Running migrations..."
+php /var/www/html/artisan migrate --force || echo "Warning: Migration failed or database not reachable yet"
+
+# Re-asegurar permisos sobre sqlite y storage generados por artisan
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+chmod 664 /var/www/html/database/database.sqlite 2>/dev/null || true
 
 # Optimizar cachés si estamos en producción
 if [ "$APP_ENV" = "production" ]; then
