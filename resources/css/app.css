@@ -1,0 +1,234 @@
+@import "tailwindcss";
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.tsx';
+@source '../**/*.ts';
+
+@theme {
+    /* Brand Colors */
+    --color-brand-50: #eff6ff;
+    --color-brand-100: #dbeafe;
+    --color-brand-200: #bfdbfe;
+    --color-brand-300: #93c5fd;
+    --color-brand-400: #60a5fa;
+    --color-brand-500: #3b82f6;
+    --color-brand-600: #2563eb;
+    --color-brand-700: #1d4ed8;
+    --color-brand-800: #1e40af;
+    --color-brand-900: #1e3a8a;
+    --color-brand-950: #172554;
+
+    /* Status Colors */
+    --color-status-pending: #f59e0b;
+    --color-status-review: #3b82f6;
+    --color-status-notified: #8b5cf6;
+    --color-status-resolved: #10b981;
+
+    /* Font */
+    --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+        "Segoe UI Symbol", "Noto Color Emoji";
+
+    /* Border Radius */
+    --radius-card: 0.75rem;
+    --radius-button: 0.5rem;
+
+    /* Shadows */
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-elevated: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+@layer base {
+    :root {
+        color-scheme: dark;
+        /* Glass theme — used everywhere, on top of the blurred city background */
+        --bg-primary: rgba(255, 255, 255, 0.06);
+        --bg-secondary: transparent;
+        --bg-tertiary: rgba(255, 255, 255, 0.12);
+        --border-default: rgba(255, 255, 255, 0.15);
+        --border-muted: rgba(255, 255, 255, 0.08);
+        --text-primary: #ffffff;
+        --text-secondary: rgba(255, 255, 255, 0.75);
+        --text-muted: rgba(255, 255, 255, 0.5);
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        position: relative;
+        background-color: #0f172a;
+        background-image:
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.65)),
+            url('/Fondo/fondo-login.png');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        color: var(--text-primary);
+        font-family: var(--font-sans);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+        pointer-events: none;
+    }
+}
+
+@layer utilities {
+    .glass {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .dark .glass {
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .bg-surface-primary {
+        background-color: var(--bg-primary);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+    .bg-surface-secondary { background-color: var(--bg-secondary); }
+    .bg-surface-tertiary {
+        background-color: var(--bg-tertiary);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+    .border-default { border-color: var(--border-default); }
+    .text-primary { color: var(--text-primary); }
+    .text-secondary { color: var(--text-secondary); }
+    .text-muted { color: var(--text-muted); }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.625rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        line-height: 1;
+    }
+
+    .status-pendiente {
+        color: #d97706;
+        background-color: #fef3c7;
+    }
+    .dark .status-pendiente {
+        color: #fbbf24;
+        background-color: rgba(251, 191, 36, 0.15);
+    }
+    .status-en_revision {
+        color: #1d4ed8;
+        background-color: #dbeafe;
+    }
+    .dark .status-en_revision {
+        color: #60a5fa;
+        background-color: rgba(96, 165, 250, 0.15);
+    }
+    .status-notificado {
+        color: #7c3aed;
+        background-color: #ede9fe;
+    }
+    .dark .status-notificado {
+        color: #a78bfa;
+        background-color: rgba(167, 139, 250, 0.15);
+    }
+    .status-resuelto {
+        color: #059669;
+        background-color: #d1fae5;
+    }
+    .dark .status-resuelto {
+        color: #34d399;
+        background-color: rgba(52, 211, 153, 0.15);
+    }
+    .status-en_camino {
+        color: #0369a1;
+        background-color: #e0f2fe;
+    }
+    .dark .status-en_camino {
+        color: #38bdf8;
+        background-color: rgba(56, 189, 248, 0.15);
+    }
+    .status-en_proceso {
+        color: #c2410c;
+        background-color: #ffedd5;
+    }
+    .dark .status-en_proceso {
+        color: #fb923c;
+        background-color: rgba(251, 146, 60, 0.15);
+    }
+}
+
+/* Enlarge Leaflet's zoom control to a proper touch target (min 44x44px) on mobile. */
+@media (max-width: 768px) {
+    .leaflet-control-zoom a {
+        width: 44px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+        font-size: 20px !important;
+    }
+}
+
+/* Map page: lift the zoom control above the FAB (button + its label) so the bottom-right
+   corner doesn't get crowded. */
+.map-canvas .leaflet-bottom.leaflet-right {
+    margin-bottom: 7.5rem;
+    margin-right: 0.75rem;
+}
+
+.map-canvas .leaflet-control-zoom {
+    border-radius: 9999px !important;
+    overflow: hidden;
+    box-shadow: var(--shadow-elevated) !important;
+}
+
+/* Attribution moves to its own corner (bottom-left, past the locate button) and matches the
+   app's dark glass controls instead of Leaflet's default white box. */
+.map-canvas .leaflet-bottom.leaflet-left {
+    margin-left: 4.75rem;
+    margin-bottom: 0.85rem;
+}
+
+.map-canvas .leaflet-control-attribution {
+    background: rgba(15, 23, 42, 0.75) !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 9999px;
+    padding: 3px 10px;
+    font-size: 10px;
+    box-shadow: var(--shadow-card);
+}
+
+.map-canvas .leaflet-control-attribution a {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* "You are here" live location dot */
+@keyframes my-location-pulse {
+    0% { transform: scale(0.6); opacity: 0.7; }
+    70% { transform: scale(2); opacity: 0; }
+    100% { transform: scale(2); opacity: 0; }
+}
+.my-location-pulse {
+    animation: my-location-pulse 2s ease-out infinite;
+}
