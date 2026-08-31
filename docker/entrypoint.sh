@@ -26,6 +26,9 @@ php /var/www/html/artisan storage:link --force || true
 echo "Running migrations..."
 php /var/www/html/artisan migrate --force || echo "Warning: Migration failed or database not reachable yet"
 
+echo "Running seeders..."
+php /var/www/html/artisan db:seed --force || echo "Warning: Seeders failed"
+
 # Re-asegurar permisos sobre sqlite y storage generados por artisan
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
