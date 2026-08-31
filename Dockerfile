@@ -29,6 +29,7 @@ RUN apk add --no-cache \
     zip \
     unzip \
     sqlite-dev \
+    postgresql-dev \
     icu-dev \
     oniguruma-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -36,6 +37,7 @@ RUN apk add --no-cache \
         gd \
         pdo \
         pdo_mysql \
+        pdo_pgsql \
         pdo_sqlite \
         zip \
         bcmath \
