@@ -128,15 +128,15 @@ export default function MapToolbar({
     const moreFiltersActiveCount = mineOnly ? 1 : 0;
 
     const pillBase =
-        'flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-medium transition-colors';
-    const pillInactive = 'border-white/10 bg-white/5 text-secondary hover:bg-white/10 hover:text-primary';
-    const pillActive = 'border-transparent text-white shadow-sm';
+        'flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-medium transition-all duration-150';
+    const pillInactive = 'border-white/10 bg-slate-950/40 text-slate-300 hover:border-white/20 hover:bg-slate-950/60 hover:text-white';
+    const pillActive = 'border-transparent text-white font-semibold shadow-md';
 
     return (
         <div className={cn('flex flex-wrap items-center gap-2', className)}>
             {/* Address search */}
             <div ref={searchRef} className="relative min-w-[200px] flex-1 basis-64" data-tour="search">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                     type="text"
                     value={query}
@@ -146,15 +146,15 @@ export default function MapToolbar({
                     }}
                     onFocus={() => setSearchOpen(true)}
                     placeholder="Buscar dirección, barrio o referencia…"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 py-2 pl-9 pr-8 text-sm text-primary placeholder:text-muted outline-none transition-colors focus:border-brand-500 focus:bg-white/10"
+                    className="w-full rounded-xl border border-white/15 bg-slate-950/60 py-2 pl-9 pr-8 text-sm text-white placeholder:text-slate-400 outline-none transition-all focus:border-brand-500 focus:bg-slate-950/80 focus:ring-2 focus:ring-brand-500/25"
                 />
                 {searching && (
-                    <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-muted" />
+                    <Loader2 className="absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin text-brand-400" />
                 )}
                 {!searching && query && (
                     <button
                         onClick={() => { setQuery(''); setResults([]); }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-primary"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
                     >
                         <X className="h-3.5 w-3.5" />
                     </button>
@@ -167,7 +167,7 @@ export default function MapToolbar({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -4 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute left-0 right-0 top-full z-10 mt-2 max-h-64 overflow-y-auto rounded-xl border border-white/10 bg-slate-900/95 p-1.5 shadow-[var(--shadow-elevated)] backdrop-blur-md"
+                            className="absolute left-0 right-0 top-full z-10 mt-2 max-h-64 overflow-y-auto rounded-2xl border border-white/15 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-2xl"
                         >
                             {results.map((r, i) => (
                                 <li key={i}>
@@ -177,9 +177,9 @@ export default function MapToolbar({
                                             setQuery(r.label);
                                             setSearchOpen(false);
                                         }}
-                                        className="flex w-full items-start gap-2 rounded-lg px-2.5 py-2 text-left text-xs text-secondary transition-colors hover:bg-white/10 hover:text-primary"
+                                        className="flex w-full items-start gap-2 rounded-xl px-2.5 py-2 text-left text-xs text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                                     >
-                                        <Search className="mt-0.5 h-3 w-3 shrink-0 text-muted" />
+                                        <Search className="mt-0.5 h-3 w-3 shrink-0 text-slate-400" />
                                         {r.label}
                                     </button>
                                 </li>
@@ -202,7 +202,7 @@ export default function MapToolbar({
                         >
                             <span
                                 className="h-2 w-2 rounded-full"
-                                style={{ backgroundColor: active ? 'rgba(255,255,255,0.9)' : opt.dot }}
+                                style={{ backgroundColor: active ? 'rgba(255,255,255,0.95)' : opt.dot }}
                             />
                             {opt.label}
                             <ChevronDown className="h-3 w-3 opacity-60" />
@@ -235,11 +235,11 @@ export default function MapToolbar({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -4 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute left-0 top-full z-10 mt-2 max-h-72 w-64 overflow-y-auto rounded-xl border border-white/10 bg-slate-900/95 p-1.5 shadow-[var(--shadow-elevated)] backdrop-blur-md"
+                            className="absolute left-0 top-full z-10 mt-2 max-h-72 w-64 overflow-y-auto rounded-2xl border border-white/15 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-2xl"
                         >
                             <button
                                 onClick={() => { onSelectType(''); setOpenId(null); }}
-                                className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm text-secondary transition-colors hover:bg-white/10 hover:text-primary"
+                                className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                             >
                                 Todas las categorías
                                 {incidentTypeId === '' && <Check className="h-3.5 w-3.5 text-brand-400" />}
@@ -251,7 +251,7 @@ export default function MapToolbar({
                                     <button
                                         key={type.id}
                                         onClick={() => { onSelectType(type.id); setOpenId(null); }}
-                                        className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-secondary transition-colors hover:bg-white/10 hover:text-primary"
+                                        className="flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-left text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                                     >
                                         <span className="flex items-center gap-2">
                                             <Icon className="h-4 w-4" style={{ color }} />
@@ -269,7 +269,7 @@ export default function MapToolbar({
             {/* Date dropdown */}
             <div ref={date.ref} className="relative shrink-0">
                 <button onClick={date.toggle} className={cn(pillBase, pillInactive)}>
-                    <CalendarDays className="h-3.5 w-3.5" />
+                    <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
                     {activeDateLabel}
                     <ChevronDown className={cn('h-3 w-3 opacity-60 transition-transform', date.isOpen && 'rotate-180')} />
                 </button>
@@ -281,13 +281,13 @@ export default function MapToolbar({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -4 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute left-0 top-full z-10 mt-2 w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 p-1.5 shadow-[var(--shadow-elevated)] backdrop-blur-md"
+                            className="absolute left-0 top-full z-10 mt-2 w-48 overflow-hidden rounded-2xl border border-white/15 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-2xl"
                         >
                             {DATE_OPTIONS.map((opt) => (
                                 <button
                                     key={opt.value}
                                     onClick={() => { onSelectDateRange(opt.value); setOpenId(null); }}
-                                    className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm text-secondary transition-colors hover:bg-white/10 hover:text-primary"
+                                    className="flex w-full items-center justify-between rounded-xl px-2.5 py-2 text-left text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                                 >
                                     {opt.label}
                                     {dateRange === opt.value && <Check className="h-3.5 w-3.5 text-brand-400" />}
@@ -301,10 +301,10 @@ export default function MapToolbar({
             {/* More filters dropdown */}
             <div ref={more.ref} className="relative shrink-0">
                 <button onClick={more.toggle} className={cn(pillBase, pillInactive, 'relative')}>
-                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    <SlidersHorizontal className="h-3.5 w-3.5 text-slate-400" />
                     Más filtros
                     {moreFiltersActiveCount > 0 && (
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[10px] font-extrabold text-white">
                             {moreFiltersActiveCount}
                         </span>
                     )}
@@ -317,15 +317,15 @@ export default function MapToolbar({
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -4 }}
                             transition={{ duration: 0.15 }}
-                            className="absolute left-0 top-full z-10 mt-2 w-56 rounded-xl border border-white/10 bg-slate-900/95 p-2 shadow-[var(--shadow-elevated)] backdrop-blur-md"
+                            className="absolute left-0 top-full z-10 mt-2 w-56 rounded-2xl border border-white/15 bg-slate-900/95 p-2 shadow-2xl backdrop-blur-2xl"
                         >
-                            <label className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-sm text-secondary transition-colors hover:bg-white/10 hover:text-primary">
+                            <label className="flex w-full cursor-pointer items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-sm text-slate-300 transition-colors hover:bg-white/10 hover:text-white">
                                 Solo mis reportes
                                 <input
                                     type="checkbox"
                                     checked={mineOnly}
                                     onChange={onToggleMineOnly}
-                                    className="h-4 w-4 accent-brand-600"
+                                    className="h-4 w-4 rounded accent-brand-500"
                                 />
                             </label>
                         </motion.div>
@@ -337,7 +337,7 @@ export default function MapToolbar({
             <button
                 onClick={onStartTour}
                 data-tour="help-trigger"
-                className="ml-auto flex shrink-0 items-center gap-1.5 rounded-xl border border-brand-500/40 bg-brand-500/10 px-3 py-2 text-sm font-medium text-brand-300 transition-colors hover:bg-brand-500/20"
+                className="ml-auto flex shrink-0 items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-300 transition-all hover:bg-amber-500/20 hover:border-amber-500/50 hover:shadow-[0_0_15px_rgba(245,158,11,0.25)]"
             >
                 <HelpCircle className="h-4 w-4" />
                 ¿Cómo reportar?

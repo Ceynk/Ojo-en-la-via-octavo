@@ -23,10 +23,10 @@ interface FilterChipsProps {
 
 const chipClass = (active: boolean) =>
     cn(
-        'shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+        'shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all duration-150 shadow-xs',
         active
-            ? 'border-brand-600 bg-brand-600 text-white shadow-[0_2px_8px_rgba(37,99,235,0.35)]'
-            : 'border-default bg-surface-tertiary text-secondary hover:bg-white/15 hover:text-primary',
+            ? 'border-brand-500 bg-brand-600 text-white shadow-[0_2px_12px_rgba(37,99,235,0.4)]'
+            : 'border-white/15 bg-slate-900/80 text-slate-300 hover:border-brand-500/40 hover:bg-slate-800/90 hover:text-white',
     );
 
 export default function FilterChips({
@@ -122,16 +122,17 @@ export default function FilterChips({
             {categoryOpen && createPortal(
                 <div
                     ref={menuRef}
-                    className="fixed z-[1000] max-h-72 w-60 overflow-y-auto rounded-xl border border-default bg-slate-900/95 p-1.5 shadow-[var(--shadow-elevated)] backdrop-blur-md"
+                    className="fixed z-[1000] max-h-72 w-64 overflow-y-auto rounded-2xl border border-white/15 bg-slate-900/98 p-1.5 shadow-2xl backdrop-blur-2xl"
                     style={{ top: menuPos.top, left: menuPos.left }}
                 >
                     <button
                         onClick={() => { onSelectType(''); setCategoryOpen(false); }}
-                        className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                        className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs font-semibold text-slate-200 transition-colors hover:bg-white/10 hover:text-white"
                     >
                         Todas las categorías
                         {incidentTypeId === '' && <Check className="h-3.5 w-3.5 text-brand-400" />}
                     </button>
+                    <div className="my-1 border-t border-white/10" />
                     {incidentTypes.map((type) => {
                         const { color, Icon } = getIncidentTypeStyle(type);
                         const active = incidentTypeId === type.id;
@@ -139,11 +140,16 @@ export default function FilterChips({
                             <button
                                 key={type.id}
                                 onClick={() => { onSelectType(type.id); setCategoryOpen(false); }}
-                                className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                                className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                             >
-                                <span className="flex items-center gap-2">
-                                    <Icon className="h-4 w-4" style={{ color }} />
-                                    {type.name}
+                                <span className="flex items-center gap-2.5">
+                                    <div
+                                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-white/10"
+                                        style={{ backgroundColor: `${color}25`, color }}
+                                    >
+                                        <Icon className="h-3.5 w-3.5" />
+                                    </div>
+                                    <span className="truncate">{type.name}</span>
                                 </span>
                                 {active && <Check className="h-3.5 w-3.5 text-brand-400" />}
                             </button>

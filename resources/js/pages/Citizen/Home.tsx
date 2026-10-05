@@ -331,11 +331,11 @@ export default function Home() {
                         whileTap={{ scale: 0.95 }}
                         onClick={handleLocate}
                         disabled={locating}
-                        className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-900/85 text-white shadow-[var(--shadow-modal)] backdrop-blur-md transition-colors hover:bg-slate-800/90 disabled:opacity-60"
+                        className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-slate-900/90 text-white shadow-[var(--shadow-elevated)] backdrop-blur-md transition-all hover:border-brand-500/40 hover:text-brand-300 hover:bg-slate-800/90 disabled:opacity-60"
                         title="Mi ubicación"
                     >
                         {locating ? (
-                            <Loader2 className="h-5 w-5 animate-spin text-brand-600" />
+                            <Loader2 className="h-5 w-5 animate-spin text-brand-400" />
                         ) : (
                             <Locate className="h-5 w-5" />
                         )}
@@ -348,14 +348,14 @@ export default function Home() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleFabClick}
-                        className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-[var(--shadow-modal)] transition-colors hover:bg-brand-700"
+                        className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-[0_0_25px_rgba(37,99,235,0.45)] transition-all hover:bg-brand-500 hover:shadow-[0_0_35px_rgba(37,99,235,0.7)]"
                         title="Registrar incidente"
                     >
                         <Plus className="h-6 w-6" />
                     </motion.button>
                     <span
-                        className="text-center text-[11px] font-semibold leading-tight text-white"
-                        style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}
+                        className="text-center text-[11px] font-bold leading-tight text-white tracking-wide"
+                        style={{ textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}
                     >
                         Reportar<br />un incidente
                     </span>
@@ -371,17 +371,16 @@ export default function Home() {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 onClick={handleFormClose}
-                                className="absolute inset-0 z-[1100] bg-black/30 backdrop-blur-sm md:hidden"
+                                className="absolute inset-0 z-[1100] bg-black/60 backdrop-blur-sm md:hidden"
                             />
 
-                            {/* z-[1200]: Leaflet's own controls (zoom, attribution) sit at z-index 1000,
-                                so this panel must clear that or they'd show through on top of it. */}
+                            {/* z-[1200]: Leaflet's own controls sit at z-index 1000 */}
                             <motion.div
                                 initial={{ x: '100%' }}
                                 animate={{ x: 0 }}
                                 exit={{ x: '100%' }}
                                 transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                                className="absolute right-0 top-0 z-[1200] h-full w-full max-w-sm bg-white shadow-[var(--shadow-modal)]"
+                                className="absolute right-0 top-0 z-[1200] h-full w-full max-w-sm border-l border-white/10 bg-slate-900/95 shadow-[var(--shadow-modal)] backdrop-blur-2xl"
                             >
                                 <ReportForm
                                     coords={coords}

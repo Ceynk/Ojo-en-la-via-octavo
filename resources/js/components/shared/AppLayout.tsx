@@ -53,38 +53,51 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
         { href: '/perfil', label: 'Perfil', icon: User },
     ];
 
+    const { url } = usePage();
+
     return (
         <div className="min-h-screen bg-surface-secondary">
             {/* Top navbar */}
-            {/* z-[900]: the header is `sticky`, which makes it its own stacking context — anything
-                inside it (like the notification dropdown) is capped at whatever z-index the header
-                itself has, regardless of its own z-index. Must clear the map page's overlays
-                (toolbar/panels top out around z-600) or dropdowns here render behind them. */}
-            <header className="sticky top-0 z-[900] border-b border-default bg-surface-primary/80 backdrop-blur-sm">
+            <header className="sticky top-0 z-[900] border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
                 <div className="px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 items-center justify-between">
                         {/* Logo */}
-                        <Link href="/inicio" className="flex items-center gap-2 group">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm transition-transform group-hover:scale-105">
-                                <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-6 w-6 object-contain" />
+                        <Link href="/inicio" className="flex items-center gap-3 group">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white p-1 shadow-[0_0_15px_rgba(37,99,235,0.3)] transition-all group-hover:scale-105 group-hover:shadow-[0_0_20px_rgba(37,99,235,0.5)]">
+                                <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-7 w-7 object-contain" />
                             </div>
-                            <span className="text-base font-bold text-primary">Ojo en la Vía</span>
+                            <div className="flex flex-col">
+                                <span className="text-base font-bold tracking-tight text-white group-hover:text-brand-300 transition-colors">
+                                    Ojo en la Vía
+                                </span>
+                                <span className="text-[10px] font-semibold tracking-wider text-amber-400 uppercase -mt-0.5">
+                                    Villavicencio
+                                </span>
+                            </div>
                         </Link>
 
-                        {/* Nav + actions, grouped together on the right so the header doesn't feel hollow in the middle */}
-                        <div className="flex items-center gap-1 md:gap-6">
+                        {/* Nav + actions */}
+                        <div className="flex items-center gap-1 md:gap-5">
                             {/* Desktop nav */}
-                            <nav className="hidden items-center gap-1 md:flex">
-                                {navItems.map(({ href, label, icon: Icon }) => (
-                                    <Link
-                                        key={href}
-                                        href={href}
-                                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-tertiary hover:text-primary"
-                                    >
-                                        <Icon className="h-4 w-4" />
-                                        {label}
-                                    </Link>
-                                ))}
+                            <nav className="hidden items-center gap-1.5 md:flex">
+                                {navItems.map(({ href, label, icon: Icon }) => {
+                                    const isActive = url.startsWith(href);
+                                    return (
+                                        <Link
+                                            key={href}
+                                            href={href}
+                                            className={cn(
+                                                'flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-medium transition-all duration-150',
+                                                isActive
+                                                    ? 'border border-brand-500/40 bg-brand-500/15 text-brand-300 shadow-[0_0_15px_rgba(59,130,246,0.2)]'
+                                                    : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                                            )}
+                                        >
+                                            <Icon className={cn('h-4 w-4', isActive ? 'text-brand-400' : 'text-slate-400')} />
+                                            {label}
+                                        </Link>
+                                    );
+                                })}
                             </nav>
 
                             {/* Divider between nav and actions */}
@@ -96,7 +109,10 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                 <div className="relative">
                                     <button
                                         onClick={() => setNotifOpen((o) => !o)}
-                                        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-tertiary hover:text-primary"
+                                        className={cn(
+                                            'relative flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white',
+                                            notifOpen && 'bg-white/10 text-white',
+                                        )}
                                         aria-label="Notificaciones"
                                     >
                                         <Bell className="h-4 w-4" />
@@ -104,7 +120,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                             <motion.span
                                                 initial={{ scale: 0 }}
                                                 animate={{ scale: 1 }}
-                                                className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white"
+                                                className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[10px] font-extrabold text-slate-950 shadow-[0_0_10px_rgba(245,158,11,0.6)]"
                                             >
                                                 {notifications_count > 9 ? '9+' : notifications_count}
                                             </motion.span>
@@ -122,16 +138,16 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                 <button
                                     type="button"
                                     onClick={() => setLogoutModalOpen(true)}
-                                    className="hidden md:flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-tertiary hover:text-primary"
+                                    className="hidden md:flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
                                 >
-                                    <LogOut className="h-4 w-4" />
+                                    <LogOut className="h-4 w-4 text-slate-400" />
                                     Salir
                                 </button>
 
                                 {/* Mobile menu toggle */}
                                 <button
                                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                                    className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-tertiary hover:text-primary md:hidden"
+                                    className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-300 transition-colors hover:bg-white/10 hover:text-white md:hidden"
                                 >
                                     {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
                                 </button>
@@ -148,27 +164,35 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="border-t border-default md:hidden"
+                            className="border-t border-white/10 bg-slate-950/95 backdrop-blur-2xl md:hidden"
                         >
                             <nav className="flex flex-col gap-1 px-4 py-3">
-                                {navItems.map(({ href, label, icon: Icon }) => (
-                                    <Link
-                                        key={href}
-                                        href={href}
-                                        onClick={() => setMobileMenuOpen(false)}
-                                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-secondary transition-colors hover:bg-surface-tertiary hover:text-primary"
-                                    >
-                                        <Icon className="h-4 w-4" />
-                                        {label}
-                                    </Link>
-                                ))}
+                                {navItems.map(({ href, label, icon: Icon }) => {
+                                    const isActive = url.startsWith(href);
+                                    return (
+                                        <Link
+                                            key={href}
+                                            href={href}
+                                            onClick={() => setMobileMenuOpen(false)}
+                                            className={cn(
+                                                'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors',
+                                                isActive
+                                                    ? 'border border-brand-500/40 bg-brand-500/15 text-brand-300'
+                                                    : 'text-slate-300 hover:bg-white/10 hover:text-white',
+                                            )}
+                                        >
+                                            <Icon className={cn('h-4 w-4', isActive ? 'text-brand-400' : 'text-slate-400')} />
+                                            {label}
+                                        </Link>
+                                    );
+                                })}
                                 <button
                                     type="button"
                                     onClick={() => {
                                         setMobileMenuOpen(false);
                                         setLogoutModalOpen(true);
                                     }}
-                                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-950/20"
+                                    className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-500/10"
                                 >
                                     <LogOut className="h-4 w-4" />
                                     Cerrar sesión
@@ -190,16 +214,18 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                         transition={{ type: 'spring', damping: 22, stiffness: 280 }}
                         className="fixed left-1/2 top-20 z-[9999] -translate-x-1/2"
                     >
-                        <div className="flex items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-4 py-2.5 shadow-[var(--shadow-elevated)] dark:border-brand-800 dark:bg-brand-950/80">
-                            <RefreshCw className="h-3.5 w-3.5 shrink-0 text-brand-600" />
-                            <p className="text-xs font-medium text-brand-800 dark:text-brand-200">
+                        <div className="flex items-center gap-2.5 rounded-2xl border border-brand-500/30 bg-slate-900/90 px-4 py-3 text-white shadow-2xl backdrop-blur-xl ring-1 ring-brand-500/20">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500/20 text-brand-400">
+                                <RefreshCw className="h-3.5 w-3.5 shrink-0 animate-spin" style={{ animationDuration: '4s' }} />
+                            </span>
+                            <p className="text-xs font-semibold text-slate-100">
                                 {liveToast.message}
                             </p>
                             <button
                                 onClick={() => setLiveToast(null)}
-                                className="ml-1 text-brand-400 hover:text-brand-600"
+                                className="ml-2 text-slate-400 transition-colors hover:text-white"
                             >
-                                <X className="h-3 w-3" />
+                                <X className="h-3.5 w-3.5" />
                             </button>
                         </div>
                     </motion.div>

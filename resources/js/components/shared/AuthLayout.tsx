@@ -25,37 +25,38 @@ export default function AuthLayout({ children, eyebrow, tagline, footer, wide = 
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 className={cn('relative w-full', wide ? 'max-w-2xl' : 'max-w-md')}
             >
-                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
-                    <div className="h-1.5 w-full bg-gradient-to-r from-emerald-400 via-brand-400 to-brand-600" />
+                <div className="overflow-hidden rounded-3xl border border-white/15 bg-slate-900/85 shadow-2xl backdrop-blur-2xl">
+                    <div className="h-1.5 w-full bg-gradient-to-r from-amber-400 via-brand-500 to-emerald-400" />
 
                     <div className={cn('py-10', wide ? 'px-6 sm:px-10' : 'px-8')}>
                         <div className="flex flex-col items-center text-center">
-                            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg">
-                                <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-[4.5rem] w-[4.5rem] object-contain" />
+                            <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl bg-white p-2 shadow-[0_0_30px_rgba(37,99,235,0.35)] ring-1 ring-white/40">
+                                <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-[4.2rem] w-[4.2rem] object-contain drop-shadow" />
                             </div>
-                            <h1 className="mt-4 text-xl font-bold tracking-wide text-white">
+                            <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-white">
                                 OJO EN LA VÍA
                             </h1>
-                            <p className="text-sm font-semibold tracking-wide text-brand-300">
+                            <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-0.5 text-xs font-semibold tracking-wider text-amber-300">
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                                 VILLAVICENCIO
-                            </p>
+                            </div>
                             {tagline && (
-                                <p className="mt-1 text-sm text-white/70">{tagline}</p>
+                                <p className="mt-2 text-sm text-slate-300">{tagline}</p>
                             )}
                         </div>
 
                         <div className="my-7 flex items-center gap-3">
-                            <div className="h-px flex-1 bg-white/20" />
-                            <span className="text-xs font-semibold tracking-widest text-white/60">
+                            <div className="h-px flex-1 bg-gradient-to-r from-transparent to-white/20" />
+                            <span className="text-[11px] font-bold tracking-widest text-slate-400 uppercase">
                                 {eyebrow}
                             </span>
-                            <div className="h-px flex-1 bg-white/20" />
+                            <div className="h-px flex-1 bg-gradient-to-l from-transparent to-white/20" />
                         </div>
 
                         {children}
 
                         {footer && (
-                            <p className="mt-7 text-center text-xs text-white/50">
+                            <p className="mt-7 text-center text-xs text-slate-400">
                                 {footer}
                             </p>
                         )}

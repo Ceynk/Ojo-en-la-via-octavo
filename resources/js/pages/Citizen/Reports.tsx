@@ -199,27 +199,27 @@ export default function Reports() {
                 <div className="mb-4 flex flex-wrap items-center gap-3">
                     {/* Search */}
                     <div className="relative flex-1 min-w-[200px]">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                        <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <input
                             type="text"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && applySearch()}
                             placeholder="Buscar por descripción…"
-                            className="w-full rounded-lg border border-default bg-surface-primary py-2 pl-9 pr-4 text-sm text-primary placeholder:text-muted outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                            className="w-full rounded-xl border border-white/15 bg-slate-900/80 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-slate-400 outline-none backdrop-blur-md transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 shadow-xs"
                         />
                     </div>
 
                     {/* Sort */}
                     <div className="relative">
-                        <ArrowUpDown className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                        <ArrowUpDown className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                         <select
                             value={sort}
                             onChange={(e) => handleSortChange(e.target.value as SortOption)}
-                            className="appearance-none rounded-lg border border-default bg-surface-primary py-2 pl-9 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                            className="appearance-none rounded-xl border border-white/15 bg-slate-900/80 py-2.5 pl-10 pr-9 text-sm font-medium text-slate-200 outline-none backdrop-blur-md transition-all focus:border-brand-500 focus:ring-2 focus:ring-brand-500/30 shadow-xs cursor-pointer"
                         >
                             {SORT_OPTIONS.map((o) => (
-                                <option key={o.value} value={o.value} className="bg-white text-gray-900">
+                                <option key={o.value} value={o.value} className="bg-slate-900 text-white">
                                     {o.label}
                                 </option>
                             ))}
@@ -227,8 +227,8 @@ export default function Reports() {
                     </div>
 
                     {locating && (
-                        <span className="flex items-center gap-1 text-xs text-muted">
-                            <Loader2 className="h-3 w-3 animate-spin" />
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-brand-400">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             Ubicando…
                         </span>
                     )}
@@ -238,10 +238,10 @@ export default function Reports() {
                         <button
                             onClick={toggleMine}
                             className={cn(
-                                'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+                                'flex items-center gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-semibold transition-all shadow-xs',
                                 filters.mine
-                                    ? 'border-brand-600 bg-brand-600 text-white'
-                                    : 'border-default bg-surface-primary text-secondary hover:bg-surface-tertiary',
+                                    ? 'border-brand-500 bg-brand-600 text-white shadow-[0_2px_12px_rgba(37,99,235,0.35)]'
+                                    : 'border-white/15 bg-slate-900/80 text-slate-300 hover:border-brand-500/40 hover:bg-slate-800/90 hover:text-white',
                             )}
                         >
                             <UserIcon className="h-4 w-4" />
@@ -282,12 +282,12 @@ export default function Reports() {
                 {isLoading ? (
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {Array.from({ length: 6 }).map((_, i) => (
-                            <div key={i} className="animate-pulse rounded-xl border border-default bg-surface-primary">
-                                <div className="aspect-video w-full rounded-t-xl bg-surface-tertiary" />
-                                <div className="p-4 space-y-2">
-                                    <div className="h-4 w-3/4 rounded bg-surface-tertiary" />
-                                    <div className="h-3 w-full rounded bg-surface-tertiary" />
-                                    <div className="h-3 w-2/3 rounded bg-surface-tertiary" />
+                            <div key={i} className="animate-pulse rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+                                <div className="aspect-video w-full rounded-xl bg-white/5" />
+                                <div className="mt-4 space-y-2.5">
+                                    <div className="h-4 w-3/4 rounded-md bg-white/10" />
+                                    <div className="h-3 w-full rounded-md bg-white/5" />
+                                    <div className="h-3 w-2/3 rounded-md bg-white/5" />
                                 </div>
                             </div>
                         ))}
@@ -298,11 +298,11 @@ export default function Reports() {
                         animate={{ opacity: 1 }}
                         className="flex flex-col items-center justify-center py-20 text-center"
                     >
-                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-tertiary">
-                            <AlertTriangle className="h-8 w-8 text-muted" />
+                        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-slate-900/80 text-amber-400 shadow-lg">
+                            <AlertTriangle className="h-8 w-8" />
                         </div>
-                        <p className="text-base font-medium text-primary">Sin reportes</p>
-                        <p className="mt-1 text-sm text-muted">
+                        <p className="text-base font-bold text-white">Sin reportes</p>
+                        <p className="mt-1 text-sm text-slate-400">
                             {hasActiveFilters
                                 ? 'No hay resultados con los filtros aplicados.'
                                 : 'Aún no hay reportes registrados.'}
@@ -338,12 +338,12 @@ export default function Reports() {
                         <button
                             onClick={() => setPage((p) => Math.max(1, p - 1))}
                             disabled={page === 1}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-default text-muted transition-colors hover:bg-surface-tertiary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-slate-900/80 text-slate-300 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </button>
 
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                             {Array.from({ length: lastPage }, (_, i) => i + 1)
                                 .filter((p) => p === 1 || p === lastPage || Math.abs(p - page) <= 2)
                                 .reduce<(number | '…')[]>((acc, p, i, arr) => {
@@ -353,7 +353,7 @@ export default function Reports() {
                                 }, [])
                                 .map((p, i) =>
                                     p === '…' ? (
-                                        <span key={`ellipsis-${i}`} className="px-1 text-sm text-muted">
+                                        <span key={`ellipsis-${i}`} className="px-1 text-sm text-slate-500">
                                             …
                                         </span>
                                     ) : (
@@ -361,10 +361,10 @@ export default function Reports() {
                                             key={p}
                                             onClick={() => setPage(p as number)}
                                             className={cn(
-                                                'flex h-9 w-9 items-center justify-center rounded-lg text-sm font-medium transition-colors',
+                                                'flex h-9 w-9 items-center justify-center rounded-xl text-sm font-semibold transition-all shadow-xs',
                                                 page === p
-                                                    ? 'bg-brand-600 text-white'
-                                                    : 'border border-default text-muted hover:bg-surface-tertiary hover:text-primary',
+                                                    ? 'border border-brand-500 bg-brand-600 text-white shadow-[0_0_12px_rgba(37,99,235,0.4)]'
+                                                    : 'border border-white/15 bg-slate-900/80 text-slate-300 hover:border-brand-500/40 hover:bg-slate-800 hover:text-white',
                                             )}
                                         >
                                             {p}
@@ -376,7 +376,7 @@ export default function Reports() {
                         <button
                             onClick={() => setPage((p) => Math.min(lastPage, p + 1))}
                             disabled={page === lastPage}
-                            className="flex h-9 w-9 items-center justify-center rounded-lg border border-default text-muted transition-colors hover:bg-surface-tertiary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-slate-900/80 text-slate-300 transition-all hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                         >
                             <ChevronRight className="h-4 w-4" />
                         </button>

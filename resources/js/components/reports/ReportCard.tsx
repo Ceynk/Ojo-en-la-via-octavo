@@ -48,13 +48,14 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
             transition={{ duration: 0.25 }}
             onClick={() => onReportClick?.(report)}
             className={cn(
-                'group flex flex-col rounded-xl border border-default bg-surface-primary',
-                'shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-elevated)]',
+                'group flex flex-col rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-xl',
+                'shadow-[var(--shadow-card)] transition-all duration-200',
+                'hover:-translate-y-1 hover:border-brand-500/40 hover:shadow-[0_12px_30px_rgba(0,0,0,0.55),0_0_20px_rgba(37,99,235,0.2)]',
                 onReportClick && 'cursor-pointer',
             )}
         >
             {/* Image */}
-            <div className="relative aspect-video w-full overflow-hidden rounded-t-xl bg-surface-tertiary">
+            <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl bg-slate-950/60">
                 {image ? (
                     image.type === 'video' ? (
                         <div className="relative h-full w-full">
@@ -64,9 +65,9 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
                                 preload="metadata"
                                 muted
                             />
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white">
-                                    <Play className="h-4 w-4 fill-current" />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px]">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white border border-white/20 shadow-lg">
+                                    <Play className="h-4 w-4 fill-current ml-0.5" />
                                 </div>
                             </div>
                         </div>
@@ -79,8 +80,8 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
                         />
                     )
                 ) : (
-                    <div className="flex h-full w-full items-center justify-center">
-                        <MapPin className="h-8 w-8 text-muted opacity-30" />
+                    <div className="flex h-full w-full items-center justify-center bg-slate-950/40">
+                        <MapPin className="h-8 w-8 text-slate-600" />
                     </div>
                 )}
 
@@ -96,7 +97,7 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
                         <div className="absolute right-3 top-3">
                             <span
                                 style={{ backgroundColor: color }}
-                                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium text-white shadow-sm"
+                                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white shadow-md border border-white/20"
                             >
                                 <Icon className="h-3 w-3" />
                                 {report.incident_type.name}
@@ -109,17 +110,17 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
             {/* Content */}
             <div className="flex flex-1 flex-col gap-2 p-4">
                 {/* Description */}
-                <p className="text-sm text-secondary leading-relaxed">
+                <p className="text-sm text-slate-200 leading-relaxed font-normal">
                     {truncate(report.description, 120)}
                 </p>
 
                 {/* Address */}
                 {report.address_text && (
-                    <p className="flex items-center gap-1 text-xs text-muted">
-                        <MapPin className="h-3 w-3 shrink-0" />
-                        {truncate(report.address_text, 60)}
+                    <p className="flex items-center gap-1 text-xs text-slate-400">
+                        <MapPin className="h-3 w-3 shrink-0 text-slate-500" />
+                        <span className="truncate">{truncate(report.address_text, 60)}</span>
                         {distanceKm !== undefined && (
-                            <span className="ml-1 shrink-0 text-brand-500">
+                            <span className="ml-1 shrink-0 font-semibold text-amber-400">
                                 · {formatDistanceKm(distanceKm)}
                             </span>
                         )}
@@ -127,13 +128,13 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
                 )}
 
                 {/* Footer */}
-                <div className="mt-auto flex items-center justify-between pt-2 border-t border-default">
+                <div className="mt-auto flex items-center justify-between pt-3 border-t border-white/10">
                     {/* User + time */}
                     <div className="flex items-center gap-2">
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-400">
+                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-500/25 border border-brand-500/40 text-[10px] font-bold text-brand-300">
                             {report.user?.name?.[0]?.toUpperCase() ?? 'U'}
                         </div>
-                        <span className="text-xs text-muted">
+                        <span className="text-xs text-slate-400">
                             {report.user?.name ?? 'Usuario'} · {formatRelativeTime(report.created_at)}
                         </span>
                     </div>
@@ -146,8 +147,8 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
                             className={cn(
                                 'flex items-center gap-1 text-xs transition-colors',
                                 liked
-                                    ? 'text-red-500'
-                                    : 'text-muted hover:text-red-400',
+                                    ? 'text-red-400'
+                                    : 'text-slate-400 hover:text-red-400',
                                 !auth.user && 'cursor-default',
                             )}
                             aria-label="Me gusta"
@@ -158,13 +159,13 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
                             {likesCount > 0 && <span>{likesCount}</span>}
                         </button>
 
-                        <span className="flex items-center gap-1 text-xs text-muted">
+                        <span className="flex items-center gap-1 text-xs text-slate-400">
                             <MessageSquare className="h-3.5 w-3.5" />
                             {report.comments_count ?? 0}
                         </span>
 
                         {report.is_edited && (
-                            <span title="Editado" className="text-muted">
+                            <span title="Editado" className="text-slate-500">
                                 <Pencil className="h-3 w-3" />
                             </span>
                         )}
