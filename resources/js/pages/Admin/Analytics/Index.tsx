@@ -166,7 +166,7 @@ function HelpModal({ open, onClose, title, children }: {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 12 }}
                         transition={{ duration: 0.2, ease: 'easeOut' }}
-                        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-white/10 shadow-2xl backdrop-blur-2xl"
+                        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-slate-900/95 text-white shadow-2xl backdrop-blur-2xl"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="help-modal-title"

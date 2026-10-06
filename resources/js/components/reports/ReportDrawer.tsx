@@ -147,10 +147,10 @@ export default function ReportDrawer({ reportId, onClose, statusLabels }: Report
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 28, stiffness: 260 }}
-                        className="fixed right-0 top-0 z-[1200] flex h-full w-full max-w-lg flex-col bg-surface-primary shadow-[var(--shadow-modal)]"
+                        className="fixed right-0 top-0 z-[1200] flex h-full w-full max-w-lg flex-col border-l border-white/10 bg-slate-900/95 text-white shadow-2xl backdrop-blur-2xl"
                     >
                         {/* Header */}
-                        <div className="flex shrink-0 items-center justify-between border-b border-default px-5 py-4">
+                        <div className="flex shrink-0 items-center justify-between border-b border-white/10 px-5 py-4 bg-slate-950/40">
                             <div className="flex items-center gap-3">
                                 {report && <StatusBadge status={report.status} labelOverride={(statusLabels ?? STATUS_LABELS)[report.status]} />}
                                 <span className="text-sm font-semibold text-primary">

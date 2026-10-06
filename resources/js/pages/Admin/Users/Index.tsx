@@ -182,10 +182,10 @@ export default function UsersIndex() {
                                                         value={user.role}
                                                         onChange={(e) => changeRole(user, e.target.value as 'ciudadano' | 'admin')}
                                                         disabled={changingRoleId === user.id}
-                                                        className="rounded border border-default bg-surface-primary py-0.5 pl-1 pr-5 text-[11px] text-secondary outline-none focus:border-brand-500 disabled:opacity-50"
+                                                        className="rounded-lg border border-white/15 bg-slate-900/80 py-0.5 pl-1.5 pr-5 text-[11px] text-white outline-none focus:border-brand-500 disabled:opacity-50 cursor-pointer"
                                                     >
-                                                        <option value="ciudadano" className="bg-white text-gray-900">ciudadano</option>
-                                                        <option value="admin" className="bg-white text-gray-900">admin</option>
+                                                        <option value="ciudadano" className="bg-slate-900 text-white">ciudadano</option>
+                                                        <option value="admin" className="bg-slate-900 text-white">admin</option>
                                                     </select>
                                                 )}
                                             </div>

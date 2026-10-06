@@ -122,7 +122,7 @@ export default function GuidedTour({ steps, open, onClose }: GuidedTourProps) {
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.96 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute w-80 rounded-2xl border border-white/10 bg-slate-900 p-4 text-white shadow-[var(--shadow-modal)]"
+                        className="absolute w-80 rounded-2xl border border-white/15 bg-slate-900/95 p-4 text-white shadow-2xl backdrop-blur-2xl"
                         style={tooltipStyle}
                     >
                         <div className="mb-2 flex items-start justify-between gap-2">

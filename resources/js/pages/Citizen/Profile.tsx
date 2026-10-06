@@ -170,9 +170,9 @@ export default function Profile() {
                                                 onChange={(e) => form.setData('document_type', e.target.value)}
                                                 className={inputClass(!!form.errors.document_type)}
                                             >
-                                                <option value="" disabled>Selecciona un tipo</option>
+                                                <option value="" disabled className="bg-slate-900 text-slate-400">Selecciona un tipo</option>
                                                 {DOCUMENT_TYPES.map((d) => (
-                                                    <option key={d} value={d}>{DOCUMENT_TYPE_LABELS[d]}</option>
+                                                    <option key={d} value={d} className="bg-slate-900 text-white">{DOCUMENT_TYPE_LABELS[d]}</option>
                                                 ))}
                                             </select>
                                         </ProfileField>
@@ -219,9 +219,9 @@ export default function Profile() {
                                                 onChange={(e) => form.setData('gender', e.target.value)}
                                                 className={inputClass(!!form.errors.gender)}
                                             >
-                                                <option value="" disabled>Selecciona una opción</option>
+                                                <option value="" disabled className="bg-slate-900 text-slate-400">Selecciona una opción</option>
                                                 {GENDERS.map((g) => (
-                                                    <option key={g} value={g}>{GENDER_LABELS[g]}</option>
+                                                    <option key={g} value={g} className="bg-slate-900 text-white">{GENDER_LABELS[g]}</option>
                                                 ))}
                                             </select>
                                         </ProfileField>

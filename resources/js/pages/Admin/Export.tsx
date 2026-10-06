@@ -119,7 +119,7 @@ export default function Export() {
                                     value={from}
                                     max={to || undefined}
                                     onChange={(e) => setFrom(e.target.value)}
-                                    className="w-full rounded-lg border border-default bg-surface-secondary py-2 px-3 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                                    className="w-full rounded-xl border border-white/15 bg-slate-900/80 py-2 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
                                 />
                             </div>
                             <div>
@@ -132,7 +132,7 @@ export default function Export() {
                                     value={to}
                                     min={from || undefined}
                                     onChange={(e) => setTo(e.target.value)}
-                                    className="w-full rounded-lg border border-default bg-surface-secondary py-2 px-3 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                                    className="w-full rounded-xl border border-white/15 bg-slate-900/80 py-2 px-3 text-sm text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
                                 />
                             </div>
                         </div>
@@ -146,10 +146,10 @@ export default function Export() {
                             <select
                                 value={status}
                                 onChange={(e) => setStatus(e.target.value as ReportStatus | '')}
-                                className="w-full rounded-lg border border-default bg-surface-secondary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                                className="w-full rounded-xl border border-white/15 bg-slate-900/80 py-2 pl-3 pr-8 text-sm text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors cursor-pointer"
                             >
                                 {STATUS_OPTIONS.map((o) => (
-                                    <option key={o.value} value={o.value} className="bg-white text-gray-900">{o.label}</option>
+                                    <option key={o.value} value={o.value} className="bg-slate-900 text-white">{o.label}</option>
                                 ))}
                             </select>
                         </div>

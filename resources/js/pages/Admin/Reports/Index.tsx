@@ -78,10 +78,10 @@ export default function AdminReportsIndex() {
                             setStatus(e.target.value);
                             applyFilters({ status: e.target.value });
                         }}
-                        className="rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                        className="rounded-xl border border-white/15 bg-slate-900/80 py-2 pl-3 pr-8 text-sm text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors cursor-pointer"
                     >
                         {STATUS_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value} className="bg-white text-gray-900">{o.label}</option>
+                            <option key={o.value} value={o.value} className="bg-slate-900 text-white">{o.label}</option>
                         ))}
                     </select>
 
@@ -91,11 +91,11 @@ export default function AdminReportsIndex() {
                             setType(e.target.value);
                             applyFilters({ type: e.target.value });
                         }}
-                        className="rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                        className="rounded-xl border border-white/15 bg-slate-900/80 py-2 pl-3 pr-8 text-sm text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors cursor-pointer"
                     >
-                        <option value="" className="bg-white text-gray-900">Todos los tipos</option>
+                        <option value="" className="bg-slate-900 text-slate-400">Todos los tipos</option>
                         {incident_types.map((t: IncidentType) => (
-                            <option key={t.id} value={t.id} className="bg-white text-gray-900">{t.name}</option>
+                            <option key={t.id} value={t.id} className="bg-slate-900 text-white">{t.name}</option>
                         ))}
                     </select>
 

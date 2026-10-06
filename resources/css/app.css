@@ -88,6 +88,15 @@
         background: rgba(255, 255, 255, 0.35);
     }
 
+    /* Native select dropdown options matching the dark glass theme */
+    select option {
+        background-color: #0f172a;
+        color: #ffffff;
+    }
+    select option:disabled {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
     body {
         position: relative;
         background-color: #0b1329;

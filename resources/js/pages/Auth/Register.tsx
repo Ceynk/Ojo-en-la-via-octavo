@@ -57,9 +57,9 @@ function GlassSelect({ label, icon: Icon, value, onChange, options, placeholder,
                         error && 'ring-2 ring-red-400/60',
                     )}
                 >
-                    <option value="" disabled className="bg-gray-900 text-white/40">{placeholder}</option>
+                    <option value="" disabled className="bg-slate-900 text-white/40">{placeholder}</option>
                     {options.map((o) => (
-                        <option key={o.value} value={o.value} className="bg-gray-900 text-white">
+                        <option key={o.value} value={o.value} className="bg-slate-900 text-white">
                             {o.label}
                         </option>
                     ))}

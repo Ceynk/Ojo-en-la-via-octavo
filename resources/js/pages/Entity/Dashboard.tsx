@@ -55,10 +55,10 @@ export default function EntityDashboard() {
                             setStatus(e.target.value);
                             applyFilters(e.target.value);
                         }}
-                        className="rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                        className="rounded-xl border border-white/15 bg-slate-900/80 py-2 pl-3 pr-8 text-sm text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors cursor-pointer"
                     >
                         {STATUS_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value} className="bg-white text-gray-900">{o.label}</option>
+                            <option key={o.value} value={o.value} className="bg-slate-900 text-white">{o.label}</option>
                         ))}
                     </select>
 

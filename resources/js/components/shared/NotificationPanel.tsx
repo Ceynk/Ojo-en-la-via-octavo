@@ -122,12 +122,12 @@ export default function NotificationPanel({ open, onClose, onReportOpen }: Notif
                     exit={{ opacity: 0, y: -8, scale: 0.97 }}
                     transition={{ duration: 0.18, ease: 'easeOut' }}
                     className={cn(
-                        'absolute right-0 top-full z-50 mt-2 w-80 sm:w-96',
-                        'rounded-xl border border-white/10 bg-slate-900/95 text-white shadow-[var(--shadow-modal)] backdrop-blur-md',
+                        'absolute right-0 top-full z-50 mt-2 w-80 sm:w-96 overflow-hidden',
+                        'rounded-2xl border border-white/15 bg-slate-900/95 text-white shadow-2xl backdrop-blur-2xl',
                     )}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                    <div className="flex items-center justify-between border-b border-white/10 px-4 py-3 bg-slate-950/40">
                         <div className="flex items-center gap-2">
                             <span className="text-sm font-semibold text-white">Notificaciones</span>
                             {unreadCount > 0 && (
