@@ -10,7 +10,7 @@ import type { PageProps, PaginatedData, Report, ReportStatus, Entity } from '@/t
 
 interface EntityDashboardProps extends PageProps {
     reports: PaginatedData<Report>;
-    filters: { status?: string };
+    filters: { status?: string; sort?: string };
     entity: Pick<Entity, 'id' | 'name'>;
 }
 
@@ -27,10 +27,12 @@ const STATUS_OPTIONS: { value: ReportStatus | ''; label: string }[] = [
 export default function EntityDashboard() {
     const { reports, filters, entity } = usePage<EntityDashboardProps>().props;
     const [status, setStatus] = useState(filters.status ?? '');
+    const [sort, setSort] = useState(filters.sort ?? '');
 
-    function applyFilters(nextStatus: string) {
+    function applyFilters(nextStatus: string, nextSort: string) {
         const params: Record<string, string> = {};
         if (nextStatus) params.status = nextStatus;
+        if (nextSort) params.sort = nextSort;
         router.get('/entidad/dashboard', params, { preserveState: true, replace: true });
     }
 
@@ -53,13 +55,26 @@ export default function EntityDashboard() {
                         value={status}
                         onChange={(e) => {
                             setStatus(e.target.value);
-                            applyFilters(e.target.value);
+                            applyFilters(e.target.value, sort);
                         }}
                         className="rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
                     >
                         {STATUS_OPTIONS.map((o) => (
                             <option key={o.value} value={o.value} className="bg-white text-gray-900">{o.label}</option>
                         ))}
+                    </select>
+
+                    {/* RF-12: put the cases the community backs the most first. */}
+                    <select
+                        value={sort}
+                        onChange={(e) => {
+                            setSort(e.target.value);
+                            applyFilters(status, e.target.value);
+                        }}
+                        className="rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                    >
+                        <option value="" className="bg-white text-gray-900">Más recientes</option>
+                        <option value="support" className="bg-white text-gray-900">Más apoyados</option>
                     </select>
 
                     <span className="ml-auto text-xs text-muted">
@@ -81,7 +96,7 @@ export default function EntityDashboard() {
                                     <th className="px-5 py-3 font-medium">Ciudadano</th>
                                     <th className="px-5 py-3 font-medium">Estado</th>
                                     <th className="px-5 py-3 font-medium">Fecha</th>
-                                    <th className="px-5 py-3 font-medium text-center">
+                                    <th className="px-5 py-3 font-medium text-center" title="Apoyos: me gusta + confirmaciones">
                                         <Heart className="inline h-3 w-3" />
                                     </th>
                                     <th className="px-5 py-3 font-medium text-center">
@@ -116,7 +131,7 @@ export default function EntityDashboard() {
                                         </td>
 
                                         <td className="px-5 py-3 text-center text-muted text-xs">
-                                            {report.likes_count ?? 0}
+                                            {(report.likes_count ?? 0) + (report.confirmations_count ?? 0)}
                                         </td>
 
                                         <td className="px-5 py-3 text-center text-muted text-xs">

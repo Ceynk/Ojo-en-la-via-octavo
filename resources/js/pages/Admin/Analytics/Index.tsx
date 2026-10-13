@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown, Minus, Users, FileText, CheckCircle2, Activity, HelpCircle, X } from 'lucide-react';
 import AdminLayout from '@/components/shared/AdminLayout';
+import ZoneMap, { type ZoneStat } from '@/components/reports/ZoneMap';
 import { cn, STATUS_LABELS } from '@/lib/utils';
 import type { PageProps, ReportStatus, User } from '@/types';
 
@@ -17,6 +18,7 @@ interface AnalyticsData {
     byStatus: Record<string, number>;
     trend: { day: string; total: number; resolved: number }[];
     activeUsers: (Pick<User, 'id' | 'name' | 'email' | 'is_active'> & { reports_count: number })[];
+    zones: ZoneStat[];
 }
 
 interface AnalyticsProps extends PageProps {
@@ -32,8 +34,10 @@ const TYPE_COLORS = [
 
 const STATUS_PALETTE: Record<string, string> = {
     pendiente:   '#f59e0b',
-    en_revision: '#3b82f6',
     notificado:  '#8b5cf6',
+    en_camino:   '#0ea5e9',
+    en_revision: '#3b82f6',
+    en_proceso:  '#f97316',
     resuelto:    '#10b981',
 };
 
@@ -497,6 +501,47 @@ export default function AnalyticsIndex() {
                         </ResponsiveContainer>
                     ) : (
                         <EmptyChart message="Sin actividad en este rango" />
+                    )}
+                </ChartCard>
+
+                {/* RF-32: incidents by zone */}
+                <ChartCard title="Incidentes por zona" delay={0.4}>
+                    {(data.zones ?? []).length > 0 ? (
+                        <div className="space-y-4">
+                            <ZoneMap zones={data.zones} />
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-default text-left text-muted">
+                                            <th className="py-2 pr-3 font-medium">Zona (referencia)</th>
+                                            <th className="py-2 pr-3 font-medium">Tipo más frecuente</th>
+                                            <th className="py-2 pr-3 text-right font-medium">Total</th>
+                                            <th className="py-2 pr-3 text-right font-medium">Abiertos</th>
+                                            <th className="py-2 text-right font-medium">Resueltos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-default">
+                                        {data.zones.slice(0, 10).map((z) => (
+                                            <tr key={`${z.lat}:${z.lng}`}>
+                                                <td className="max-w-[260px] truncate py-2 pr-3 text-secondary" title={z.reference}>
+                                                    {z.reference}
+                                                </td>
+                                                <td className="py-2 pr-3 text-secondary">{z.top_type}</td>
+                                                <td className="py-2 pr-3 text-right font-semibold text-primary">{z.total}</td>
+                                                <td className="py-2 pr-3 text-right text-amber-400">{z.open}</td>
+                                                <td className="py-2 text-right text-emerald-400">{z.resolved}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p className="text-[11px] text-muted">
+                                Cada zona es un cuadrante de ~550 m. El tamaño del círculo indica la cantidad de
+                                reportes y el color qué tanto sigue abierto (rojo) o resuelto (verde).
+                            </p>
+                        </div>
+                    ) : (
+                        <EmptyChart message="Sin reportes en este rango" />
                     )}
                 </ChartCard>
             </div>

@@ -14,15 +14,10 @@ class GeminiClient
 
     public function __construct()
     {
-        $apiKey = config('gemini.api_key');
-
-        if (empty($apiKey)) {
-            throw new GeminiException(
-                'GEMINI_API_KEY is not set. Add it to your .env file before using GeminiClient.'
-            );
-        }
-
-        $this->apiKey = $apiKey;
+        // A missing key is only reported when a request is actually made (see post()): this
+        // client is constructor-injected into controllers that also have non-AI actions
+        // (e.g. ReportDuplicateController::confirm), which must keep working without Gemini.
+        $this->apiKey = (string) config('gemini.api_key');
         $this->baseUrl = rtrim(config('gemini.base_url'), '/');
     }
 
@@ -60,6 +55,12 @@ class GeminiClient
 
     protected function post(string $path, array $payload): array
     {
+        if ($this->apiKey === '') {
+            throw new GeminiException(
+                'GEMINI_API_KEY is not set. Add it to your .env file before using GeminiClient.'
+            );
+        }
+
         try {
             $response = Http::timeout(8)
                 ->retry(2, 200)

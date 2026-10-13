@@ -17,7 +17,8 @@ import { fetchRoute, type Route } from '@/lib/osrm';
 import { speak } from '@/lib/voice';
 import type { PageProps, Report } from '@/types';
 
-const GEOFENCE_METERS = 10;
+// Must match OperatorPanelController::GEOFENCE_METERS (the server is the one that enforces it).
+const GEOFENCE_METERS = 40;
 const ROUTE_REFRESH_METERS = 50;
 
 interface OperatorNavigateProps extends PageProps {

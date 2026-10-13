@@ -49,12 +49,53 @@ class AdminAnalyticsController extends Controller
                 ->limit(10)
                 ->get(['id', 'first_name', 'last_name', 'email', 'is_active']);
 
-            return compact('reportsByType', 'byStatus', 'trend', 'activeUsers');
+            $zones = $this->zones($from);
+
+            return compact('reportsByType', 'byStatus', 'trend', 'activeUsers', 'zones');
         });
 
         return Inertia::render('Admin/Analytics/Index', [
             'data' => $data,
             'days' => $days,
         ]);
+    }
+
+    /**
+     * RF-32 — incidents by zone. Reports only carry coordinates (no neighborhood field), so
+     * zones are a fixed grid of ZONE_CELL_DEG degrees (~550 m in Villavicencio): every report
+     * falls in exactly one cell, cells are stable between periods and nothing depends on an
+     * external geocoder. Each zone reports its center, totals per status and its most
+     * frequent incident type, sorted by volume.
+     */
+    private const ZONE_CELL_DEG = 0.005;
+
+    private function zones(\DateTimeInterface $from): array
+    {
+        $reports = Report::with('incidentType:id,name')
+            ->where('created_at', '>=', $from)
+            ->get(['id', 'latitude', 'longitude', 'status', 'incident_type_id', 'address_text']);
+
+        return $reports
+            ->groupBy(fn ($r) => floor($r->latitude / self::ZONE_CELL_DEG) . ':' . floor($r->longitude / self::ZONE_CELL_DEG))
+            ->map(function ($group) {
+                $sample = $group->first();
+                $topType = $group->countBy(fn ($r) => $r->incidentType?->name ?? 'Sin categoría')->sortDesc();
+
+                return [
+                    'lat'      => round((floor($sample->latitude / self::ZONE_CELL_DEG) + 0.5) * self::ZONE_CELL_DEG, 5),
+                    'lng'      => round((floor($sample->longitude / self::ZONE_CELL_DEG) + 0.5) * self::ZONE_CELL_DEG, 5),
+                    'total'    => $group->count(),
+                    'resolved' => $group->where('status', 'resuelto')->count(),
+                    'open'     => $group->where('status', '!=', 'resuelto')->count(),
+                    'by_status' => $group->countBy('status'),
+                    'top_type' => $topType->keys()->first(),
+                    // A real address from inside the cell so the table reads as a place.
+                    'reference' => $sample->address_text,
+                ];
+            })
+            ->sortByDesc('total')
+            ->values()
+            ->take(50)
+            ->all();
     }
 }

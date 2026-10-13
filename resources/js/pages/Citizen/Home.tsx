@@ -14,6 +14,7 @@ import NearbyReportsPanel, { RADIUS_OPTIONS_KM } from '@/components/reports/Near
 import MapToolbar, { type DateRangeFilter } from '@/components/reports/MapToolbar';
 import { FlashMessages } from '@/components/ui/alert';
 import { usePublicChannel } from '@/hooks/useEcho';
+import { useQueuedReports } from '@/lib/offlineReports';
 import type { PageProps, Report, ReportStatus } from '@/types';
 
 interface Coords {
@@ -87,11 +88,15 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
 }
 
 export default function Home() {
-    const { incident_types } = usePage<PageProps>().props;
+    const { incident_types, auth } = usePage<PageProps>().props;
     const [formOpen, setFormOpen] = useState(false);
     const [coords, setCoords] = useState<Coords | null>(null);
     const [locating, setLocating] = useState(false);
-    const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+    // A shared link (/inicio?reporte=ID, see ShareReportButton) opens that report directly.
+    const [selectedReportId, setSelectedReportId] = useState<number | null>(() => {
+        const id = Number(new URLSearchParams(window.location.search).get('reporte'));
+        return Number.isInteger(id) && id > 0 ? id : null;
+    });
     const [previewReportId, setPreviewReportId] = useState<number | null>(null);
     const [filters, setFilters] = useState<Filters>({ status: '', incident_type_id: '', mine: false });
     const [dateRange, setDateRange] = useState<DateRangeFilter>('all');
@@ -142,9 +147,45 @@ export default function Home() {
         staleTime: 1000 * 60,
     });
 
+    // Reports made without signal live on the device until they're sent. Show them on the
+    // map like any other report (negative ids so they can't clash with real ones) so that,
+    // from the citizen's point of view, their report is simply there.
+    const queuedReports = useQueuedReports(auth.user?.id);
+    const pendingAsReports = useMemo<Report[]>(
+        () =>
+            queuedReports
+                .filter((q) => !q.rejected_reason)
+                .filter((q) => !filters.status || filters.status === 'pendiente')
+                .filter((q) => !filters.incident_type_id || q.incident_type_id === filters.incident_type_id)
+                .map((q, i) => ({
+                    id: -(i + 1),
+                    user_id: q.user_id,
+                    incident_type_id: q.incident_type_id,
+                    description: q.description,
+                    status: 'pendiente',
+                    latitude: q.latitude,
+                    longitude: q.longitude,
+                    address_text: q.address_text,
+                    is_edited: false,
+                    edited_at: null,
+                    claimed_by_user_id: null,
+                    claimed_at: null,
+                    possible_duplicate_of: q.possible_duplicate_of ?? null,
+                    duplicate_similarity: q.duplicate_similarity ?? null,
+                    created_at: q.created_at,
+                    updated_at: q.created_at,
+                    incident_type: incident_types.find((t) => t.id === q.incident_type_id),
+                    images: [],
+                    likes_count: 0,
+                    comments_count: 0,
+                    user_liked: false,
+                })),
+        [queuedReports, filters.status, filters.incident_type_id, incident_types],
+    );
+
     const visibleReports = useMemo(
-        () => reports.filter((r) => isWithinDateRange(r.created_at, dateRange)),
-        [reports, dateRange],
+        () => [...pendingAsReports, ...reports].filter((r) => isWithinDateRange(r.created_at, dateRange)),
+        [pendingAsReports, reports, dateRange],
     );
 
     const previewReport = useMemo(
@@ -184,6 +225,7 @@ export default function Home() {
     }, []);
 
     function handleViewDetails(id: number) {
+        if (id < 0) return; // still on the device — there's no server-side detail to load yet
         setSelectedReportId(id);
         setPreviewReportId(null);
     }

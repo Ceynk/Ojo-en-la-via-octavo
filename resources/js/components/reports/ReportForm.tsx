@@ -5,7 +5,13 @@ import axios from 'axios';
 import { X, Camera, ImageIcon, Loader2, AlertTriangle, Sparkles, Info, Copy, MapPin } from 'lucide-react';
 import { cn, getStorageUrl } from '@/lib/utils';
 import { compressImage } from '@/lib/imageCompression';
+import { enqueueReport } from '@/lib/offlineReports';
 import type { PageProps } from '@/types';
+
+// A weak signal can leave an upload hanging forever. If no upload progress arrives for this
+// long, the submit is abandoned and the report goes to the offline queue instead (the shared
+// client_uuid makes it safe even if the stalled request did reach the server after all).
+const STALLED_UPLOAD_MS = 20_000;
 
 interface AiSuggestion {
     suggested_incident_type_id: number | null;
@@ -44,29 +50,27 @@ interface ReportFormProps {
 }
 
 export default function ReportForm({ coords, onClose, onSuccess }: ReportFormProps) {
-    const { incident_types } = usePage<PageProps>().props;
+    const { incident_types, auth } = usePage<PageProps>().props;
     const fileRef = useRef<HTMLInputElement>(null);
     const [compressing, setCompressing] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
-    // Catch hard failures (network errors, unhandled 500s) that don't come back
-    // as Inertia validation errors, without losing the open form/drawer state.
+    // Catch hard failures (unhandled 500s) that don't come back as Inertia validation
+    // errors, without losing the open form/drawer state. Network failures are handled
+    // per-submit (see submitReport) by queueing the report for later instead.
     useEffect(() => {
         const offException = router.on('httpException', () => {
             setSubmitError('No se pudo registrar el incidente. Intenta de nuevo.');
             return false;
         });
-        const offNetwork = router.on('networkError', () => {
-            setSubmitError('No se pudo enviar el reporte. Verifica tu conexión e intenta de nuevo.');
-            return false;
-        });
         return () => {
             offException();
-            offNetwork();
         };
     }, []);
 
     const form = useForm({
+        // Idempotency key: same value whether this goes out now or later from the offline queue.
+        client_uuid: crypto.randomUUID(),
         incident_type_id: '' as string | number,
         description: '',
         latitude: '' as string | number,
@@ -160,9 +164,73 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
     const [confirmingDuplicateId, setConfirmingDuplicateId] = useState<number | null>(null);
     const [duplicateModalError, setDuplicateModalError] = useState<string | null>(null);
 
+    // Set when the citizen saw a possible-duplicate alert and chose to continue anyway; kept
+    // here too (not only in form.transform) so the offline queue carries it as well.
+    const duplicateOfRef = useRef<{ report_id: number; similarity: number } | null>(null);
+
+    // Without a server to validate, check locally what POST /reports would reject, so a
+    // queued report can't come back as a 422 hours later when the citizen is long gone.
+    function validateLocally(): boolean {
+        form.clearErrors();
+        const errors: Partial<Record<'incident_type_id' | 'description' | 'address_text', string>> = {};
+        if (!form.data.incident_type_id) errors.incident_type_id = 'Selecciona el tipo de incidente.';
+        if (!form.data.description.trim()) errors.description = 'La descripción es obligatoria.';
+        else if (form.data.description.length > 800) errors.description = 'Máximo 800 caracteres.';
+        if (!form.data.address_text.trim()) errors.address_text = 'La dirección es obligatoria.';
+        else if (form.data.address_text.length > 300) errors.address_text = 'Máximo 300 caracteres.';
+        form.setError(errors);
+        return Object.keys(errors).length === 0 && coords !== null;
+    }
+
+    const queuedRef = useRef(false);
+
+    async function queueForLater() {
+        if (queuedRef.current || !auth.user) return;
+        queuedRef.current = true;
+        try {
+            await enqueueReport({
+                client_uuid: form.data.client_uuid,
+                user_id: auth.user.id,
+                incident_type_id: Number(form.data.incident_type_id),
+                description: form.data.description,
+                latitude: Number(form.data.latitude),
+                longitude: Number(form.data.longitude),
+                address_text: form.data.address_text,
+                possible_duplicate_of: duplicateOfRef.current?.report_id ?? null,
+                duplicate_similarity: duplicateOfRef.current?.similarity ?? null,
+                media: mediaItems.map((m) => ({ blob: m.file, name: m.file.name, type: m.file.type })),
+                created_at: new Date().toISOString(),
+                attempts: 0,
+            });
+            // Same outcome as an online submit: the form closes and the report shows on the map.
+            onSuccess?.();
+            onClose();
+        } catch {
+            queuedRef.current = false;
+            setSubmitError('No se pudo enviar el reporte. Verifica tu conexión e intenta de nuevo.');
+        }
+    }
+
     function submitReport() {
+        if (!navigator.onLine) {
+            if (validateLocally()) void queueForLater();
+            return;
+        }
+
+        let lastProgressAt = Date.now();
+        const watchdog = window.setInterval(() => {
+            if (Date.now() - lastProgressAt > STALLED_UPLOAD_MS) {
+                window.clearInterval(watchdog);
+                form.cancel();
+                if (validateLocally()) void queueForLater();
+            }
+        }, 2_000);
+
         form.post('/reports', {
             forceFormData: true,
+            onProgress: () => {
+                lastProgressAt = Date.now();
+            },
             onSuccess: () => {
                 onSuccess?.();
                 onClose();
@@ -172,6 +240,11 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                     setSubmitError('No se pudo registrar el incidente. Intenta de nuevo.');
                 }
             },
+            onNetworkError: () => {
+                if (validateLocally()) void queueForLater();
+                return false;
+            },
+            onFinish: () => window.clearInterval(watchdog),
         });
     }
 
@@ -181,7 +254,9 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
 
         const description = form.data.description.trim();
 
-        if (!description || !form.data.incident_type_id || !coords) {
+        // Duplicate detection needs the server; offline it's skipped (the admins still see
+        // possible duplicates later through the embeddings computed on arrival).
+        if (!description || !form.data.incident_type_id || !coords || !navigator.onLine) {
             submitReport();
             return;
         }
@@ -198,9 +273,11 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                 payload.append('photo', firstPhoto);
             }
 
+            // Short timeout: on a weak signal this optional check must not hold the submit hostage.
             const res = await axios.post<{ duplicates: DuplicateCandidate[] }>(
                 '/reportes/verificar-duplicados',
                 payload,
+                { timeout: 8_000 },
             );
             const duplicates = res.data.duplicates ?? [];
 
@@ -223,6 +300,7 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
         setDuplicateModalError(null);
 
         if (top) {
+            duplicateOfRef.current = { report_id: top.report_id, similarity: top.similarity };
             form.transform((data) => ({
                 ...data,
                 possible_duplicate_of: top.report_id,

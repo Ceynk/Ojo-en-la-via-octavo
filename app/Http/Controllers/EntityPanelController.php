@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Concerns\ScopesToEntity;
 use App\Models\Report;
 use App\Models\ReportStatusHistory;
-use App\Services\NotificationService;
+use App\Services\ReportStatusService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,27 +19,60 @@ class EntityPanelController extends Controller
 {
     use ScopesToEntity;
 
-    public function __construct(private NotificationService $notifications) {}
+    /**
+     * Statuses the entity can set from its panel (RF-20). "Resuelto" is deliberately not
+     * here: closing a case requires an operator on site with GPS + photo/video evidence
+     * (RF-25/RF-26), so the panel can't bypass that. "En camino" belongs to an operator
+     * taking the case, and nothing goes back to "pendiente".
+     */
+    public const ENTITY_SETTABLE_STATUSES = ['en_revision', 'en_proceso'];
+
+    public function __construct(private ReportStatusService $statuses) {}
 
     public function dashboard(Request $request): Response
     {
         $typeIds = $this->entityIncidentTypeIds($request);
 
         $query = Report::whereIn('incident_type_id', $typeIds)
+            ->notRejected()
             ->with(['user:id,first_name,last_name', 'incidentType:id,name', 'images'])
-            ->withCount(['likes', 'comments']);
+            ->withCount(['likes', 'comments', 'confirmations']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->input('sort') === 'support') {
+            $query->orderBySupport();
         }
 
         $reports = $query->latest()->paginate(15)->withQueryString();
 
         return Inertia::render('Entity/Dashboard', [
             'reports' => $reports,
-            'filters' => $request->only('status'),
+            'filters' => $request->only(['status', 'sort']),
             'entity'  => $request->user()->entity->only(['id', 'name']),
         ]);
+    }
+
+    public function updateStatus(Request $request, Report $report): RedirectResponse
+    {
+        $this->authorizeForEntity($request, $report);
+
+        $data = $request->validate([
+            'status' => ['required', Rule::in(self::ENTITY_SETTABLE_STATUSES)],
+            'notes'  => ['nullable', 'string', 'max:500'],
+        ], [
+            'status.in' => 'Desde el panel solo puedes marcar el reporte como "En revisión" o "En proceso". Para resolverlo, un operario debe cerrarlo en el sitio con evidencia.',
+        ]);
+
+        if ($report->status === 'resuelto') {
+            return back()->withErrors(['status' => 'Este reporte ya fue resuelto.']);
+        }
+
+        $this->statuses->change($report, $data['status'], $request->user(), $data['notes'] ?? null);
+
+        return back()->with('success', 'Estado del reporte actualizado.');
     }
 
     public function show(Request $request, Report $report): Response
@@ -52,9 +86,12 @@ class EntityPanelController extends Controller
             'statusHistory.changedBy:id,first_name,last_name',
             'claimedBy:id,first_name,last_name',
         ]);
-        $report->loadCount(['likes', 'comments']);
+        $report->loadCount(['likes', 'comments', 'confirmations']);
 
-        return Inertia::render('Entity/Show', ['report' => $report]);
+        return Inertia::render('Entity/Show', [
+            'report'            => $report,
+            'settable_statuses' => self::ENTITY_SETTABLE_STATUSES,
+        ]);
     }
 
     public function profile(Request $request): Response

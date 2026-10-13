@@ -37,3 +37,15 @@ createInertiaApp({
         color: '#3b82f6',
     },
 });
+
+// Offline support (see public/sw.js). Production builds only: against the Vite dev server
+// there's no build to precache and stale caches would just get in the way while developing.
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker
+            .register('/sw.js')
+            .then(() => navigator.serviceWorker.ready)
+            .then((reg) => reg.active?.postMessage('precache'))
+            .catch(() => {});
+    });
+}

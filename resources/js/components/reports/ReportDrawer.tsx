@@ -13,6 +13,7 @@ import CommentForm from './CommentForm';
 import StatusBadge from './StatusBadge';
 import StatusTimeline from './StatusTimeline';
 import MediaLightbox from './MediaLightbox';
+import ShareReportButton from './ShareReportButton';
 import type { Comment, Report, ReportStatus, PageProps, ReportImage } from '@/types';
 
 interface ReportDrawerProps {
@@ -157,12 +158,15 @@ export default function ReportDrawer({ reportId, onClose, statusLabels }: Report
                                     {report?.incident_type?.name ?? 'Reporte'}
                                 </span>
                             </div>
-                            <button
-                                onClick={onClose}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-tertiary hover:text-primary"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                {report && <ShareReportButton report={report} />}
+                                <button
+                                    onClick={onClose}
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-tertiary hover:text-primary"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Scrollable body */}

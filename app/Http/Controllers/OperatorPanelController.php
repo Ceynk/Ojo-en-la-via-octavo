@@ -3,12 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Events\OperatorLocationUpdated;
-use App\Events\ReportStatusChanged;
 use App\Http\Controllers\Concerns\ScopesToEntity;
 use App\Jobs\NotifyAllCitizensOfResolution;
 use App\Models\Report;
-use App\Models\ReportStatusHistory;
-use App\Services\NotificationService;
+use App\Services\ReportStatusService;
 use App\Support\Geo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,9 +21,11 @@ class OperatorPanelController extends Controller
 {
     use ScopesToEntity;
 
-    private const GEOFENCE_METERS = 10;
+    // Phone GPS is typically off by 5–20 m (worse between buildings or under trees): a
+    // tighter fence would lock out operators who are genuinely standing at the incident.
+    private const GEOFENCE_METERS = 40;
 
-    public function __construct(private NotificationService $notifications) {}
+    public function __construct(private ReportStatusService $statuses) {}
 
     public function dashboard(Request $request): Response
     {
@@ -33,6 +33,7 @@ class OperatorPanelController extends Controller
         $userId = $request->user()->id;
 
         $available = Report::whereIn('incident_type_id', $typeIds)
+            ->notRejected()
             ->where('status', 'notificado')
             ->whereNull('claimed_by_user_id')
             ->with(['user:id,first_name,last_name', 'incidentType:id,name'])
@@ -205,28 +206,6 @@ class OperatorPanelController extends Controller
 
     private function applyStatusChange(Request $request, Report $report, string $newStatus): void
     {
-        ReportStatusHistory::create([
-            'report_id'          => $report->id,
-            'previous_status'    => $report->status,
-            'new_status'         => $newStatus,
-            'changed_by_user_id' => $request->user()->id,
-        ]);
-
-        $previousStatus = $report->status;
-        $report->update(['status' => $newStatus]);
-
-        $this->notifications->notifyStatusChange(
-            reportOwnerId: $report->user_id,
-            reportId: $report->id,
-            newStatus: $newStatus,
-            incidentTypeName: $report->incidentType->name,
-            actorId: $request->user()->id,
-        );
-
-        try {
-            broadcast(new ReportStatusChanged($report, $previousStatus));
-        } catch (\Throwable $e) {
-            Log::warning('Broadcast failed for ReportStatusChanged', ['report_id' => $report->id, 'error' => $e->getMessage()]);
-        }
+        $this->statuses->change($report, $newStatus, $request->user());
     }
 }

@@ -15,7 +15,7 @@ import { usePublicChannel } from '@/hooks/useEcho';
 import { cn, haversineDistanceKm } from '@/lib/utils';
 import type { PageProps, PaginatedData, Report, ReportStatus } from '@/types';
 
-type SortOption = 'recent' | 'comments' | 'nearest';
+type SortOption = 'recent' | 'comments' | 'support' | 'nearest';
 
 type Filters = {
     status: ReportStatus | '';
@@ -31,6 +31,7 @@ interface FeedPage extends PaginatedData<Report> {
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
     { value: 'recent', label: 'Más recientes' },
     { value: 'comments', label: 'Más comentados' },
+    { value: 'support', label: 'Más apoyados' },
     { value: 'nearest', label: 'Más cercanos' },
 ];
 
@@ -42,7 +43,7 @@ function buildParams(filters: Filters, sort: Exclude<SortOption, 'nearest'>, pag
     if (filters.incident_type_id) params.incident_type_id = String(filters.incident_type_id);
     if (filters.search.trim()) params.search = filters.search.trim();
     if (filters.mine) params.mine = '1';
-    if (sort === 'comments') params.sort = 'comments';
+    if (sort === 'comments' || sort === 'support') params.sort = sort;
     return params;
 }
 

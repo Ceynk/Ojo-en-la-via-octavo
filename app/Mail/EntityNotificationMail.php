@@ -51,7 +51,10 @@ class EntityNotificationMail extends Mailable implements ShouldQueue
                 'addressText'      => $this->report->address_text,
                 'description'      => $this->report->description,
                 'imageFile'        => $this->inlineImage($firstImage),
-                'loginUrl'         => route('login', ['redirect' => '/entidad/dashboard']),
+                // Straight to this report in the entity panel. Logged out, the auth middleware
+                // sends them to login and AuthController::login's redirect()->intended() brings
+                // them back here; already logged in, it just opens.
+                'loginUrl'         => route('entity.reports.show', $this->report),
                 'priorityBg'       => $priority['bg'],
                 'priorityText'     => $priority['text'],
                 'priorityLabel'    => $priority['label'],

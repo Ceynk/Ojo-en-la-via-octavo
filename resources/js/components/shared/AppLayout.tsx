@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,8 @@ import ReportDrawer from '@/components/reports/ReportDrawer';
 import { usePrivateChannel } from '@/hooks/useEcho';
 import { STATUS_LABELS } from '@/lib/utils';
 import LogoutModal from './LogoutModal';
+import OfflineQueueIndicator from './OfflineQueueIndicator';
+import { flushQueuedReports, useQueuedReports } from '@/lib/offlineReports';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -46,6 +48,40 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
     }, [queryClient]);
 
     usePrivateChannel(privateChannel, 'report.status.changed', handleStatusChanged);
+
+    // Offline queue: push out reports made without signal as soon as there's a connection —
+    // on load, when the browser reports it's back online, when the app returns to the
+    // foreground, and periodically while something is still waiting (weak/flaky signal).
+    const userId = auth.user?.id ?? null;
+    const queuedReports = useQueuedReports(userId);
+    const pendingCount = queuedReports.filter((r) => !r.rejected_reason).length;
+
+    useEffect(() => {
+        if (!userId) return;
+
+        const flush = () =>
+            flushQueuedReports(userId).then((sent) => {
+                if (sent === 0) return;
+                queryClient.invalidateQueries({ queryKey: ['reports'] });
+                setLiveToast({
+                    id: Date.now(),
+                    message: sent === 1 ? 'Tu reporte pendiente fue enviado' : `Se enviaron ${sent} reportes pendientes`,
+                });
+                setTimeout(() => setLiveToast(null), 5000);
+            });
+        const onVisible = () => document.visibilityState === 'visible' && flush();
+
+        flush();
+        window.addEventListener('online', flush);
+        document.addEventListener('visibilitychange', onVisible);
+        const interval = pendingCount > 0 ? window.setInterval(flush, 30_000) : undefined;
+
+        return () => {
+            window.removeEventListener('online', flush);
+            document.removeEventListener('visibilitychange', onVisible);
+            window.clearInterval(interval);
+        };
+    }, [userId, pendingCount, queryClient]);
 
     const navItems = [
         { href: '/inicio', label: 'Mapa', icon: MapPin },
@@ -92,6 +128,8 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
 
                             {/* Right actions */}
                             <div className="flex items-center gap-2">
+                                <OfflineQueueIndicator items={queuedReports} />
+
                                 {/* Notification bell */}
                                 <div className="relative">
                                     <button
