@@ -18,18 +18,23 @@ class AdminAnalyticsController extends Controller
         $days = (int) $request->get('days', 30);
         $from = now()->subDays($days)->startOfDay();
 
+        // Only plain arrays go into the cache: config/cache.php has serializable_classes => false,
+        // so cached Collections/models come back as __PHP_Incomplete_Class and the page breaks
+        // on every visit after the first one.
         $data = Cache::remember("analytics_{$days}", 300, function () use ($from, $days) {
             $reportsByType = Report::select('incident_type_id', DB::raw('count(*) as total'))
                 ->with('incidentType:id,name')
                 ->where('created_at', '>=', $from)
                 ->groupBy('incident_type_id')
                 ->get()
-                ->map(fn ($r) => ['name' => $r->incidentType?->name, 'total' => $r->total]);
+                ->map(fn ($r) => ['name' => $r->incidentType?->name, 'total' => $r->total])
+                ->all();
 
             $byStatus = Report::select('status', DB::raw('count(*) as total'))
                 ->where('created_at', '>=', $from)
                 ->groupBy('status')
-                ->pluck('total', 'status');
+                ->pluck('total', 'status')
+                ->all();
 
             // DATE() works on both SQLite and PostgreSQL
             $trend = Report::select(
@@ -40,14 +45,16 @@ class AdminAnalyticsController extends Controller
                 ->where('created_at', '>=', $from)
                 ->groupBy('day')
                 ->orderBy('day')
-                ->get();
+                ->get()
+                ->toArray();
 
             $activeUsers = User::where('role', 'ciudadano')
                 ->whereHas('reports', fn ($q) => $q->where('created_at', '>=', $from))
                 ->withCount(['reports' => fn ($q) => $q->where('created_at', '>=', $from)])
                 ->orderByDesc('reports_count')
                 ->limit(10)
-                ->get(['id', 'first_name', 'last_name', 'email', 'is_active']);
+                ->get(['id', 'first_name', 'last_name', 'email', 'is_active'])
+                ->toArray();
 
             $zones = $this->zones($from);
 
@@ -87,7 +94,7 @@ class AdminAnalyticsController extends Controller
                     'total'    => $group->count(),
                     'resolved' => $group->where('status', 'resuelto')->count(),
                     'open'     => $group->where('status', '!=', 'resuelto')->count(),
-                    'by_status' => $group->countBy('status'),
+                    'by_status' => $group->countBy('status')->all(),
                     'top_type' => $topType->keys()->first(),
                     // A real address from inside the cell so the table reads as a place.
                     'reference' => $sample->address_text,

@@ -160,6 +160,19 @@ class RequirementsSmokeTest extends TestCase
             ->has('data.activeUsers', 1)
         );
 
+        // Production caches on the database store, which refuses to unserialize objects
+        // (serializable_classes => false): a cache hit must render the same plain data.
+        config(['cache.default' => 'database']);
+        foreach (['miss', 'hit'] as $visit) {
+            $this->actingAs($admin)->get('/admin/analytics?days=90')->assertOk()->assertInertia(fn ($page) => $page
+                ->has('data.reportsByType', 1)
+                ->has('data.trend', 1)
+                ->has('data.activeUsers', 1)
+                ->where('data.activeUsers.0.reports_count', 1)
+                ->has('data.zones', 1)
+            );
+        }
+
         $csv = $this->actingAs($admin)->get('/admin/export/download')->assertOk();
         $this->assertStringContainsString('text/csv', $csv->headers->get('Content-Type'));
         $this->assertStringContainsString('Hueco profundo', $csv->getContent());
