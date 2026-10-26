@@ -62,6 +62,8 @@ return new class extends Migration
             SELECT id, report_id, previous_status, new_status, changed_by_user_id, notes, created_at, updated_at FROM report_status_history_old');
         Schema::drop('report_status_history_old');
 
+        $this->resetSequences(['report_images', 'comments', 'report_status_history']);
+
         Schema::enableForeignKeyConstraints();
     }
 
@@ -69,5 +71,20 @@ return new class extends Migration
     {
         // Not reversible — this migration only repairs a dangling foreign key reference,
         // there is no meaningful "old" state to roll back to.
+    }
+
+    /**
+     * Rows were copied with explicit ids, so on PostgreSQL the recreated table's
+     * sequence still starts at 1 — move it past the copied ids.
+     */
+    private function resetSequences(array $tables): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        foreach ($tables as $table) {
+            DB::statement("SELECT setval(pg_get_serial_sequence('{$table}', 'id'), COALESCE((SELECT MAX(id) FROM {$table}), 0) + 1, false)");
+        }
     }
 };

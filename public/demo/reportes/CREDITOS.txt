@@ -1,0 +1,37 @@
+Fotos de demostración tomadas de Wikimedia Commons (licencias libres).
+
+archivo	fuente	licencia	url
+alumbrado-1.jpg	File:Broken lamp on a derelict building in Broberg.jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Broken_lamp_on_a_derelict_building_in_Broberg.jpg
+alumbrado-2.jpg	File:Noddle Hill Way Lamp Post Replacement Progress.jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Noddle_Hill_Way_Lamp_Post_Replacement_Progress.jpg
+alumbrado-3.jpg	File:Noddle Hill Way Lamp Post Replacement Process 05.jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Noddle_Hill_Way_Lamp_Post_Replacement_Process_05.jpg
+alumbrado-4.jpg	File:Broken Lamp, Roding Lane South - geograph.org.uk - 7742323.jpg	CC BY-SA 2.0	https://commons.wikimedia.org/wiki/File:Broken_Lamp,_Roding_Lane_South_-_geograph.org.uk_-_7742323.jpg
+arbol-1.jpg	File:Fallen Tree in Dormer Place, Leamington Spa (1).jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Fallen_Tree_in_Dormer_Place,_Leamington_Spa_(1).jpg
+arbol-2.jpg	File:Fallen tree near the canal at Kirkstall - geograph.org.uk - 7410400.jpg	CC BY-SA 2.0	https://commons.wikimedia.org/wiki/File:Fallen_tree_near_the_canal_at_Kirkstall_-_geograph.org.uk_-_7410400.jpg
+arbol-3.jpg	File:Moscow, Donskaya Street, fallen tree June 2022 02.jpg	CC0	https://commons.wikimedia.org/wiki/File:Moscow,_Donskaya_Street,_fallen_tree_June_2022_02.jpg
+arbol-4.jpg	File:Moscow, Donskaya Street, fallen tree June 2022 01.jpg	CC0	https://commons.wikimedia.org/wiki/File:Moscow,_Donskaya_Street,_fallen_tree_June_2022_01.jpg
+bache-1.jpg	File:A pothole in Dilova Street in Kyiv.jpg	CC0	https://commons.wikimedia.org/wiki/File:A_pothole_in_Dilova_Street_in_Kyiv.jpg
+bache-2.jpg	File:Oak Street pothole marker - Carrollton New Orleans June 2021.jpg	CC BY 2.0	https://commons.wikimedia.org/wiki/File:Oak_Street_pothole_marker_-_Carrollton_New_Orleans_June_2021.jpg
+derrumbe-1.jpg	File:Rockfall warning on Wessenden Road - geograph.org.uk - 8194667.jpg	CC BY-SA 2.0	https://commons.wikimedia.org/wiki/File:Rockfall_warning_on_Wessenden_Road_-_geograph.org.uk_-_8194667.jpg
+derrumbe-2.jpg	File:Acadia National Park, rockfall on the park loop road.jpg	Public domain	https://commons.wikimedia.org/wiki/File:Acadia_National_Park,_rockfall_on_the_park_loop_road.jpg
+derrumbe-3.jpg	File:Landslide Blocking Road (Landslide-blocking-road-CC).jpg	CC BY 4.0	https://commons.wikimedia.org/wiki/File:Landslide_Blocking_Road_(Landslide-blocking-road-CC).jpg
+escombros-1.jpg	File:Construction debris in driveway, Zhengzhou, Henan - panoramio.jpg	CC BY 3.0	https://commons.wikimedia.org/wiki/File:Construction_debris_in_driveway,_Zhengzhou,_Henan_-_panoramio.jpg
+escombros-2.jpg	File:FEMA - 39263 - Construction equipment working on a debris in Texas.jpg	Public domain	https://commons.wikimedia.org/wiki/File:FEMA_-_39263_-_Construction_equipment_working_on_a_debris_in_Texas.jpg
+escombros-3.jpg	File:FEMA - 35315 - Construction equipment on a road in a debris area in Colorado.jpg	Public domain	https://commons.wikimedia.org/wiki/File:FEMA_-_35315_-_Construction_equipment_on_a_road_in_a_debris_area_in_Colorado.jpg
+hundimiento-1.jpg	File:Sinkhole, Bolebrooke Road, Bexhill.jpg	CC0	https://commons.wikimedia.org/wiki/File:Sinkhole,_Bolebrooke_Road,_Bexhill.jpg
+hundimiento-2.jpg	File:Sinkhole in Inverness, Florida.jpg	CC0	https://commons.wikimedia.org/wiki/File:Sinkhole_in_Inverness,_Florida.jpg
+hundimiento-3.jpg	File:Sinkhole in Harbor, Oregon 2.jpg	CC BY 2.0	https://commons.wikimedia.org/wiki/File:Sinkhole_in_Harbor,_Oregon_2.jpg
+hundimiento-4.jpg	File:Sinkhole-col-tn2.jpg	CC BY 3.0	https://commons.wikimedia.org/wiki/File:Sinkhole-col-tn2.jpg
+inundacion-1.jpg	File:Cars driving through flood water on the B4380 near Atcham - geograph.org.uk - 7390621.jpg	CC BY-SA 2.0	https://commons.wikimedia.org/wiki/File:Cars_driving_through_flood_water_on_the_B4380_near_Atcham_-_geograph.org.uk_-_7390621.jpg
+inundacion-2.jpg	File:Flooded Croft Road car park - geograph.org.uk - 7104640.jpg	CC BY-SA 2.0	https://commons.wikimedia.org/wiki/File:Flooded_Croft_Road_car_park_-_geograph.org.uk_-_7104640.jpg
+inundacion-3.jpg	File:Flooded Albizia Saman (rain tree) in the Mekong.jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Flooded_Albizia_Saman_(rain_tree)_in_the_Mekong.jpg
+inundacion-4.jpg	File:Flooded building and tree trunk in the muddy water of the Mekong in Si Phan Don, Laos, September 2019.jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Flooded_building_and_tree_trunk_in_the_muddy_water_of_the_Mekong_in_Si_Phan_Don,_Laos,_September_2019.jpg
+otro-1.jpg	File:Graffiti Wall in Florentin street Tel Aviv.jpg	CC BY 4.0	https://commons.wikimedia.org/wiki/File:Graffiti_Wall_in_Florentin_street_Tel_Aviv.jpg
+otro-2.jpg	File:Abandoned car in Marine Park (10852p).jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Abandoned_car_in_Marine_Park_(10852p).jpg
+otro-3.jpg	File:Graffiti on garage wall at Rāceņu Street.jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Graffiti_on_garage_wall_at_R%C4%81ce%C5%86u_Street.jpg
+semaforo-1.jpg	File:LED traffic signal parts.jpg	Public domain	https://commons.wikimedia.org/wiki/File:LED_traffic_signal_parts.jpg
+semaforo-2.jpg	File:Odd Traffic Signal; So 8th Ave-W 1st St; Mount Vernon NY SW corner.JPG	CC BY-SA 3.0	https://commons.wikimedia.org/wiki/File:Odd_Traffic_Signal;_So_8th_Ave-W_1st_St;_Mount_Vernon_NY_SW_corner.JPG
+semaforo-3.jpg	File:Kings Hwy Nostrand Av td (2019-01-16) 06.jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Kings_Hwy_Nostrand_Av_td_(2019-01-16)_06.jpg
+senalizacion-1.jpg	File:Damaged road sign, Cloghglass Road - geograph.org.uk - 5263097.jpg	CC BY-SA 2.0	https://commons.wikimedia.org/wiki/File:Damaged_road_sign,_Cloghglass_Road_-_geograph.org.uk_-_5263097.jpg
+senalizacion-2.jpg	File:Sign-1230244, Leixlip, Co. Kildare, Ireland.jpg	CC BY-SA 4.0	https://commons.wikimedia.org/wiki/File:Sign-1230244,_Leixlip,_Co._Kildare,_Ireland.jpg
+senalizacion-3.jpg	File:Vandalized road sign.jpg	CC BY 4.0	https://commons.wikimedia.org/wiki/File:Vandalized_road_sign.jpg
+senalizacion-4.jpg	File:A vandalized speed bump sign in Guelph, Ontario.jpg	CC BY 4.0	https://commons.wikimedia.org/wiki/File:A_vandalized_speed_bump_sign_in_Guelph,_Ontario.jpg

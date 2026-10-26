@@ -54,6 +54,23 @@ return new class extends Migration
 
         Schema::drop('reports_old');
 
+        $this->resetSequences(['reports']);
+
         Schema::enableForeignKeyConstraints();
+    }
+
+    /**
+     * Rows were copied with explicit ids, so on PostgreSQL the recreated table's
+     * sequence still starts at 1 — move it past the copied ids.
+     */
+    private function resetSequences(array $tables): void
+    {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        foreach ($tables as $table) {
+            DB::statement("SELECT setval(pg_get_serial_sequence('{$table}', 'id'), COALESCE((SELECT MAX(id) FROM {$table}), 0) + 1, false)");
+        }
     }
 };

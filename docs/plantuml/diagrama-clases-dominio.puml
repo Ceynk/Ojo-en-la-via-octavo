@@ -1,0 +1,195 @@
+@startuml
+title Ojo en la Vía - Diagrama de clases (dominio)
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+
+class User {
+  +id : int
+  +entity_id : int [0..1]
+  +first_name : string
+  +last_name : string
+  +email : string
+  +phone : string
+  +document_type : string
+  +document_number : string
+  +address : string
+  +neighborhood : string
+  +birth_date : date
+  +gender : string
+  +password : string
+  +role : string
+  +is_active : bool
+  +profile_photo : string
+  +notify_by_email : bool
+  +last_login_at : datetime
+  +current_latitude : float
+  +current_longitude : float
+  +location_updated_at : datetime
+  +/name : string
+  --
+  +isAdmin() : bool
+  +isOperator() : bool
+  +isEntityUser() : bool
+}
+
+class Entity {
+  +id : int
+  +name : string
+  +description : string
+  +entity_email : string
+  +is_active : bool
+  +subject_template : string
+  +message_template : string
+  +priority : string
+  +logo_path : string
+  +motto : string
+  +website_url : string
+  --
+  +scopeActive(query) : Builder
+  +scopeForIncidentType(query, incidentTypeId) : Builder
+  +renderMessage(report : Report) : array
+}
+
+class IncidentType {
+  +id : int
+  +name : string
+}
+
+class Report {
+  +id : int
+  +user_id : int
+  +incident_type_id : int
+  +description : string
+  +status : ReportStatus
+  +latitude : float
+  +longitude : float
+  +address_text : string
+  +is_edited : bool
+  +edited_at : datetime
+  +claimed_by_user_id : int [0..1]
+  +claimed_at : datetime
+  +possible_duplicate_of : int [0..1]
+  +duplicate_similarity : float
+}
+
+enum ReportStatus {
+  pendiente
+  en_revision
+  notificado
+  en_camino
+  en_proceso
+  resuelto
+}
+
+class ReportImage {
+  +id : int
+  +report_id : int
+  +path : string
+  +type : string
+  +kind : string
+}
+
+class ReportStatusHistory {
+  +id : int
+  +report_id : int
+  +previous_status : string
+  +new_status : string
+  +changed_by_user_id : int
+  +notes : string
+}
+
+class ReportConfirmation {
+  +id : int
+  +report_id : int
+  +user_id : int
+}
+
+class ReportEmbedding {
+  +id : int
+  +report_id : int
+  +embedding : array
+  +model : string
+  +created_at : datetime
+}
+
+class Comment {
+  +id : int
+  +report_id : int
+  +user_id : int
+  +parent_id : int [0..1]
+  +body : string
+  +is_edited : bool
+  +is_deleted : bool
+  +edited_at : datetime
+}
+
+class Like {
+  +id : int
+  +user_id : int
+  +likeable_type : string
+  +likeable_id : int
+}
+
+class Notification {
+  +id : int
+  +user_id : int
+  +actor_id : int [0..1]
+  +type : string
+  +title : string
+  +message : string
+  +report_id : int [0..1]
+  +comment_id : int [0..1]
+  +read_at : datetime
+  --
+  +isRead() : bool
+  +markAsRead() : void
+}
+
+class EntityNotification {
+  +id : int
+  +report_id : int
+  +entity_email : string
+  +subject : string
+  +message : string
+  +priority : string
+  +status : string
+}
+
+' Usuarios y entidades
+Entity "0..1" o-- "*" User : pertenece a >
+Entity "*" -- "*" IncidentType : atiende >
+
+' Reportes
+User "1" --> "*" Report : crea >
+User "0..1" --> "*" Report : reclama (operador) >
+IncidentType "1" --> "*" Report : clasifica >
+Report --> ReportStatus
+Report "1" *-- "*" ReportImage
+Report "1" *-- "*" ReportStatusHistory
+Report "1" *-- "*" ReportConfirmation
+Report "1" *-- "0..1" ReportEmbedding
+Report "*" --> "0..1" Report : posible duplicado de >
+ReportStatusHistory "*" --> "1" User : cambiado por >
+ReportConfirmation "*" --> "1" User : confirma <
+
+' Interacción social
+Report "1" *-- "*" Comment
+User "1" --> "*" Comment : escribe >
+Comment "*" --> "0..1" Comment : responde a >
+User "1" --> "*" Like : da >
+Like "*" --> "0..1" Report : likeable
+Like "*" --> "0..1" Comment : likeable
+
+' Notificaciones
+User "1" --> "*" Notification : recibe >
+Notification "*" --> "0..1" User : actor >
+Notification "*" --> "0..1" Report
+Notification "*" --> "0..1" Comment
+Report "1" --> "*" EntityNotification
+
+note bottom of Like
+  Relación polimórfica:
+  un like apunta a un Report
+  o a un Comment
+end note
+@enduml

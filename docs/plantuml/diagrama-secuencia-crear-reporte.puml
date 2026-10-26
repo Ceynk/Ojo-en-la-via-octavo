@@ -1,0 +1,98 @@
+@startuml
+title Crear un reporte - Diagrama de secuencia (detallado)
+autonumber
+
+' Estilo: líneas de vida y barras de activación bien visibles
+<style>
+lifeLine {
+  LineColor #000000
+  LineThickness 2.5
+  LineStyle 8-5
+  BackGroundColor #8FD3F0
+}
+participant, actor, database, queue {
+  BackGroundColor #FFFFFF
+  LineColor #000000
+  LineThickness 2
+}
+arrow {
+  LineColor #000000
+  LineThickness 1.5
+}
+</style>
+
+actor Ciudadano as C
+participant "ReportForm (React)" as F
+participant "IncidentAssistController" as IA
+participant "ReportDuplicateController" as DUP
+participant "Servicios IA (Gemini)" as G
+participant "ReportController" as RC
+database "Base de datos" as DB
+queue "Cola de trabajos" as Q
+participant "Reverb (tiempo real)" as WS
+actor "Entidad pública" as E
+
+C -> F ++ : Toma foto, escribe descripción y marca ubicación
+
+opt Asistente IA (al subir foto)
+  F -> IA ++ : POST /reportes/asistente-ia (foto, descripción)
+  IA -> G ++ : suggestClassification()
+  G --> IA -- : tipo de incidente sugerido
+  IA --> F -- : JSON con sugerencia
+  F --> C : Muestra tipo sugerido
+end
+
+C -> F : Pulsa "Enviar reporte"
+F -> DUP ++ : POST /reportes/verificar-duplicados
+DUP -> DB ++ : Reportes cercanos del mismo tipo
+DB --> DUP -- : candidatos
+DUP -> G ++ : findPossibleDuplicates() (similitud)
+G --> DUP -- : posibles duplicados
+DUP --> F -- : { duplicates }
+
+alt Hay posibles duplicados
+  F --> C : Modal "¿Es el mismo problema?"
+  alt Es el mismo problema
+    C -> F : Confirmar reporte existente
+    F -> DUP ++ : POST /reports/{id}/confirmar-duplicado
+    DUP -> DB ++ : Crea ReportConfirmation
+    deactivate DB
+    DUP --> F -- : OK (no se crea reporte nuevo)
+  else Continuar de todos modos
+    C -> F : Continuar
+    note over F : Agrega possible_duplicate_of\ny duplicate_similarity
+  end
+end
+
+F -> RC ++ : POST /reports (datos + fotos/videos)
+RC -> RC ++ : validate()
+deactivate RC
+RC -> DB ++ : Crea Report (estado "pendiente")
+deactivate DB
+RC -> DB ++ : Guarda ReportImage por cada archivo
+deactivate DB
+RC ->> Q : dispatch NotifyEntitiesOfReport
+RC ->> Q : dispatch GenerateReportEmbedding
+RC ->> WS ++ : broadcast ReportCreated
+WS --> F -- : Nuevo reporte en el mapa (otros usuarios)
+RC --> F -- : Redirect a inicio + "Reporte creado exitosamente"
+F --> C -- : Mensaje de éxito
+
+activate Q
+par Procesos en segundo plano (cola)
+  Q -> DB ++ : Entidades activas para ese tipo de incidente
+  deactivate DB
+  Q -> DB ++ : Notification para usuarios de la entidad
+  deactivate DB
+  Q ->> E ++ : Correo EntityNotificationMail
+  deactivate E
+  Q -> DB ++ : Report.status = "notificado"
+  deactivate DB
+else
+  Q -> G ++ : generateEmbeddingForReport()
+  G --> Q -- : vector
+  Q -> DB ++ : Guarda ReportEmbedding
+  deactivate DB
+end
+deactivate Q
+@enduml

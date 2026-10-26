@@ -1,0 +1,115 @@
+@startuml
+left to right direction
+skinparam usecase {
+  BackgroundColor #FFFFFF
+  BorderColor #333333
+}
+
+actor Ciudadano as C
+actor Entidad as E
+
+rectangle "Pagina web - Ojo en la via" as Sistema {
+  usecase "Registrar Usuario" as UC1
+  usecase "Iniciar sesion" as UC2
+  usecase "Recuperar Contraseña" as UC3
+  usecase "Consultar Perfil" as UC4
+  usecase "Editar perfil" as UC5
+  usecase "Cerrar Sesion" as UC6
+  usecase "Visualizar notificaciones" as UC7
+
+  usecase "Registrar Reporte" as UC8
+  usecase "Sugerir categoria con IA" as UC9
+  usecase "Verificar reportes duplicados" as UC10
+  usecase "Visualizar Mapa" as UC11
+  usecase "Buscar ubicacion" as UC12
+  usecase "Visualizar Reporte" as UC13
+  usecase "Comentar reporte" as UC14
+  usecase "Apoyar reporte" as UC15
+  usecase "Compartir reporte en redes" as UC16
+  usecase "Ver historial de estados" as UC17
+
+  usecase "Gestionar reporte" as UC18
+  usecase "Cambiar estado reporte" as UC19
+  usecase "Filtrar reporte" as UC20
+  usecase "Enviar reporte a la entidad" as UC21
+  usecase "Consultar usuario" as UC22
+  usecase "Cambiar estado usuario" as UC23
+  usecase "Gestionar entidades" as UC24
+  usecase "Asociar tipos de incidente" as UC25
+  usecase "Enviar avisos generales" as UC26
+  usecase "Consultar estadisticas" as UC27
+  usecase "Ver incidentes mas comunes" as UC28
+  usecase "Ver usuarios mas activos" as UC29
+  usecase "Exportar datos" as UC30
+
+  usecase "Ver casos asignados" as UC31
+  usecase "Gestionar operarios" as UC32
+  usecase "Ver ubicacion del operario" as UC33
+
+  usecase "Tomar caso" as UC34
+  usecase "Marcar reporte resuelto" as UC35
+  usecase "Verificar geolocalizacion" as UC36
+  usecase "Adjuntar evidencia" as UC37
+}
+
+actor Administrador as A
+actor Operario as O
+
+' Ciudadano
+C -- UC1
+C -- UC2
+C -- UC4
+C -- UC7
+C -- UC8
+C -- UC11
+C -- UC13
+
+' Entidad
+E -- UC2
+E -- UC4
+E -- UC7
+E -- UC13
+E -- UC19
+E -- UC31
+E -- UC32
+E -- UC33
+
+' Administrador
+UC1 -- A
+UC2 -- A
+UC4 -- A
+UC11 -- A
+UC18 -- A
+UC22 -- A
+UC24 -- A
+UC26 -- A
+UC27 -- A
+
+' Operario
+UC2 -- O
+UC4 -- O
+UC34 -- O
+UC35 -- O
+
+' Extensiones e inclusiones
+UC3 .> UC2 : <<extend>>
+UC5 .> UC4 : <<extend>>
+UC6 .> UC4 : <<extend>>
+UC9 .> UC8 : <<extend>>
+UC8 .> UC10 : <<include>>
+UC12 .> UC11 : <<extend>>
+UC14 .> UC13 : <<extend>>
+UC15 .> UC13 : <<extend>>
+UC16 .> UC13 : <<extend>>
+UC17 .> UC13 : <<extend>>
+UC19 .> UC18 : <<extend>>
+UC20 .> UC18 : <<extend>>
+UC21 .> UC18 : <<extend>>
+UC23 .> UC22 : <<extend>>
+UC25 .> UC24 : <<extend>>
+UC28 .> UC27 : <<extend>>
+UC29 .> UC27 : <<extend>>
+UC30 .> UC27 : <<extend>>
+UC35 .> UC36 : <<include>>
+UC35 .> UC37 : <<include>>
+@enduml
