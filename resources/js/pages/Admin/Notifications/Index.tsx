@@ -16,7 +16,7 @@ export default function AdminNotificationsIndex() {
     const [query, setQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, post, processing, errors, reset, transform } = useForm({
         user_ids: [] as number[],
         title:    '',
         message:  '',
@@ -46,8 +46,11 @@ export default function AdminNotificationsIndex() {
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+        transform((formData) => ({
+            ...formData,
+            user_ids: Array.from(selectedIds),
+        }));
         post('/admin/notifications/send', {
-            data: { ...data, user_ids: Array.from(selectedIds) },
             onSuccess: () => {
                 reset('title', 'message');
                 setSelectedIds(new Set());

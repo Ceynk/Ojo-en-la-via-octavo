@@ -164,7 +164,7 @@ export interface ReportStatusHistory {
     report?: Pick<Report, 'id' | 'description' | 'incident_type_id'>;
 }
 
-export interface PageProps {
+export interface PageProps extends Record<string, unknown> {
     auth: {
         user: User | null;
     };

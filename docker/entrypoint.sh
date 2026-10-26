@@ -1,0 +1,37 @@
+#!/bin/sh
+set -e
+
+mkdir -p /var/www/html/storage/framework/cache/data \
+         /var/www/html/storage/framework/sessions \
+         /var/www/html/storage/framework/views \
+         /var/www/html/storage/logs \
+         /var/www/html/bootstrap/cache \
+         /var/www/html/database
+
+if [ ! -f /var/www/html/database/database.sqlite ]; then
+    touch /var/www/html/database/database.sqlite
+fi
+
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+chmod 664 /var/www/html/database/database.sqlite 2>/dev/null || true
+
+php /var/www/html/artisan storage:link --force || true
+
+echo "Running migrations..."
+php /var/www/html/artisan migrate --force || echo "Warning: Migration failed or database not reachable yet"
+
+echo "Running seeders..."
+php /var/www/html/artisan db:seed --force || echo "Warning: Seeders failed"
+
+chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+chmod 664 /var/www/html/database/database.sqlite 2>/dev/null || true
+
+if [ "$APP_ENV" = "production" ]; then
+    php /var/www/html/artisan config:cache || true
+    php /var/www/html/artisan route:cache || true
+    php /var/www/html/artisan view:cache || true
+fi
+
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
