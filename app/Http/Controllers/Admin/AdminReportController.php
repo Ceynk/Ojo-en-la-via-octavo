@@ -43,7 +43,9 @@ class AdminReportController extends Controller
 
         return Inertia::render('Admin/Reports/Index', [
             'reports' => $reports,
-            'filters' => $request->only(['status', 'type', 'validation', 'sort']),
+            // (object): with no filters PHP sends [] — and [].sort is Array.prototype.sort, which
+            // React's useState(filters.sort ?? '') would then call as an initializer and crash.
+            'filters' => (object) $request->only(['status', 'type', 'validation', 'sort']),
         ]);
     }
 

@@ -50,7 +50,8 @@ class EntityPanelController extends Controller
 
         return Inertia::render('Entity/Dashboard', [
             'reports' => $reports,
-            'filters' => $request->only(['status', 'sort']),
+            // (object) so an empty filter set is {} not [] — see AdminReportController::index.
+            'filters' => (object) $request->only(['status', 'sort']),
             'entity'  => $request->user()->entity->only(['id', 'name']),
         ]);
     }
