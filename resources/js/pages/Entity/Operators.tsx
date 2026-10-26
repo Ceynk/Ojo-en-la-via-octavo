@@ -70,7 +70,7 @@ export default function EntityOperators() {
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                         >
-                            <form onSubmit={submit} className="rounded-xl border border-brand-200 bg-brand-50/40 p-5 dark:border-brand-800 dark:bg-brand-950/20">
+                            <form onSubmit={submit} className="rounded-xl border border-brand-800 bg-surface-primary p-5 shadow-[var(--shadow-card)]">
                                 <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-primary">
                                     <UserCog className="h-4 w-4 text-brand-600" />
                                     Nuevo operador
