@@ -63,6 +63,21 @@
         scroll-behavior: smooth;
     }
 
+    /* Phones: long unbroken strings (the demo e-mail aliases, URLs) and `truncate` text inside
+       flex/grid items used to make cards wider than the screen. Let such strings wrap only
+       when they don't fit, and let the containers of truncated text shrink so the ellipsis
+       actually kicks in. Tables keep normal wrapping: they scroll sideways in their wrapper. */
+    main {
+        overflow-wrap: anywhere;
+    }
+    main table {
+        overflow-wrap: normal;
+    }
+    main .truncate,
+    main *:has(.truncate) {
+        min-width: 0;
+    }
+
     body {
         position: relative;
         background-color: #0b1220;

@@ -21,6 +21,8 @@ interface SidebarLayoutProps {
     children: React.ReactNode;
     navGroups: SidebarNavGroup[];
     brandSubtitle: React.ReactNode;
+    /** Extra context shown under the brand when the sidebar is expanded (e.g. the entity's name). Can wrap. */
+    brandContext?: React.ReactNode;
     title?: string;
     breadcrumbs?: { label: string; href?: string }[];
     headerRight?: React.ReactNode;
@@ -33,7 +35,7 @@ interface SidebarLayoutProps {
  * keep them visually identical by changing this file, not by duplicating it.
  */
 export default function SidebarLayout({
-    children, navGroups, brandSubtitle, title, breadcrumbs, headerRight, fullBleed = false,
+    children, navGroups, brandSubtitle, brandContext, title, breadcrumbs, headerRight, fullBleed = false,
 }: SidebarLayoutProps) {
     const { auth } = usePage<PageProps>().props;
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,30 +44,39 @@ export default function SidebarLayout({
 
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
-    const SidebarContent = () => (
+    // `compact` = icons only. The desktop sidebar follows the collapse toggle; the mobile drawer
+    // always passes false, since it's only open when the user wants to read the menu.
+    const SidebarContent = ({ compact }: { compact: boolean }) => (
         <div className="flex h-full flex-col">
-            {/* Logo */}
-            <div className="flex h-16 items-center gap-3 border-b border-default px-4">
+            {/* Logo: two fixed lines so it always fits the 64px header row */}
+            <div className="flex h-16 shrink-0 items-center gap-3 border-b border-default px-4">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white">
                     <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-6 w-6 object-contain" />
                 </div>
-                {!collapsed && (
+                {!compact && (
                     <motion.div
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: 'auto' }}
-                        exit={{ opacity: 0, width: 0 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="min-w-0 leading-tight"
                     >
-                        <p className="text-sm font-bold text-primary whitespace-nowrap">Ojo en la Vía</p>
-                        <div className="text-xs text-muted">{brandSubtitle}</div>
+                        <p className="truncate text-sm font-bold text-primary">Ojo en la Vía</p>
+                        <p className="truncate text-xs text-muted">{brandSubtitle}</p>
                     </motion.div>
                 )}
             </div>
+
+            {/* Context (e.g. which entity this panel belongs to): its own row, free to wrap */}
+            {!compact && brandContext && (
+                <div className="shrink-0 border-b border-default px-3 py-3">
+                    <div className="rounded-lg bg-surface-tertiary px-3 py-2 text-xs">{brandContext}</div>
+                </div>
+            )}
 
             {/* Nav */}
             <nav className="flex-1 overflow-y-auto py-4 px-2">
                 {navGroups.map((group) => (
                     <div key={group.label} className="mb-6">
-                        {!collapsed && (
+                        {!compact && (
                             <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
                                 {group.label}
                             </p>
@@ -83,10 +94,10 @@ export default function SidebarLayout({
                                                 ? 'bg-brand-600 text-white shadow-sm'
                                                 : 'text-secondary hover:bg-surface-tertiary hover:text-primary',
                                         )}
-                                        title={collapsed ? label : undefined}
+                                        title={compact ? label : undefined}
                                     >
                                         <Icon className="h-4 w-4 shrink-0" />
-                                        {!collapsed && <span>{label}</span>}
+                                        {!compact && <span>{label}</span>}
                                     </Link>
                                 );
                             })}
@@ -97,11 +108,11 @@ export default function SidebarLayout({
 
             {/* Footer */}
             <div className="border-t border-default p-3">
-                <div className={cn('flex items-center gap-3 rounded-lg p-2', collapsed && 'justify-center')}>
+                <div className={cn('flex items-center gap-3 rounded-lg p-2', compact && 'justify-center')}>
                     <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-sm font-semibold dark:bg-brand-900 dark:text-brand-300">
                         {auth.user?.name.charAt(0).toUpperCase()}
                     </div>
-                    {!collapsed && (
+                    {!compact && (
                         <div className="flex-1 overflow-hidden">
                             <p className="truncate text-sm font-medium text-primary">{auth.user?.name}</p>
                             <p className="truncate text-xs text-muted">{auth.user?.email}</p>
@@ -113,11 +124,11 @@ export default function SidebarLayout({
                     onClick={() => setLogoutModalOpen(true)}
                     className={cn(
                         'mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-950/20',
-                        collapsed && 'justify-center',
+                        compact && 'justify-center',
                     )}
                 >
                     <LogOut className="h-4 w-4 shrink-0" />
-                    {!collapsed && 'Cerrar sesión'}
+                    {!compact && 'Cerrar sesión'}
                 </button>
             </div>
         </div>
@@ -132,7 +143,7 @@ export default function SidebarLayout({
                 className="relative hidden shrink-0 border-r border-default bg-surface-primary lg:flex lg:flex-col"
             >
                 <div className="h-full overflow-hidden">
-                    <SidebarContent />
+                    <SidebarContent compact={collapsed} />
                 </div>
             </motion.aside>
 
@@ -154,7 +165,7 @@ export default function SidebarLayout({
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
                             className="fixed left-0 top-0 z-50 h-full w-60 border-r border-default bg-surface-primary lg:hidden"
                         >
-                            <SidebarContent />
+                            <SidebarContent compact={false} />
                         </motion.aside>
                     </>
                 )}
