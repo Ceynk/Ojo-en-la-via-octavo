@@ -77,17 +77,17 @@ export default function Dashboard() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.06 }}
                             className={cn(
-                                'flex flex-col gap-3 rounded-xl border bg-surface-primary p-4',
+                                'flex items-center gap-3 rounded-xl border bg-surface-primary px-4 py-3',
                                 'shadow-[var(--shadow-card)]',
                                 border,
                             )}
                         >
-                            <div className={cn('flex h-9 w-9 items-center justify-center rounded-lg', color)}>
-                                <Icon className="h-5 w-5" />
+                            <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-lg', color)}>
+                                <Icon className="h-6 w-6" />
                             </div>
-                            <div>
-                                <p className="text-2xl font-bold text-primary">{stats[key].toLocaleString('es-CO')}</p>
-                                <p className="text-xs text-muted">{label}</p>
+                            <div className="min-w-0">
+                                <p className="text-3xl font-bold leading-tight text-primary">{stats[key].toLocaleString('es-CO')}</p>
+                                <p className="truncate text-sm text-secondary">{label}</p>
                             </div>
                         </motion.div>
                     ))}
