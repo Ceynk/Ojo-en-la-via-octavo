@@ -85,8 +85,8 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
                     </div>
                 )}
 
-                {/* Status badge overlay */}
-                <div className="absolute left-3 top-3">
+                {/* Status badge overlay — on a solid dark pill so it reads over any photo. */}
+                <div className="absolute left-3 top-3 rounded-full bg-slate-950/85 shadow-sm">
                     <StatusBadge status={report.status} />
                 </div>
 

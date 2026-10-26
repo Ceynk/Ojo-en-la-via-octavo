@@ -206,9 +206,9 @@ export default function EntityProfile() {
                                     </div>
 
                                     <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                                        <div className="flex items-center gap-2 text-sm text-secondary">
+                                        <div className="flex min-w-0 items-center gap-2 text-sm text-secondary">
                                             <Mail className="h-4 w-4 shrink-0 text-muted" />
-                                            {user!.email}
+                                            <span className="min-w-0 break-all">{user!.email}</span>
                                         </div>
                                         <div className="flex items-center gap-2 text-sm text-secondary">
                                             <Phone className="h-4 w-4 shrink-0 text-muted" />

@@ -65,7 +65,7 @@ const GRID_STROKE = 'rgba(255, 255, 255, 0.12)';
 
 // Trend: every day gets its own column so dates never overlap; when the range doesn't fit,
 // the chart scrolls sideways instead of squeezing the labels together.
-const TREND_PX_PER_DAY = 56;
+const TREND_PX_PER_DAY = 76;
 
 // Active users: 5 rows visible, the rest reachable by scrolling the card vertically.
 const USER_ROW_PX = 44;
@@ -512,7 +512,7 @@ export default function AnalyticsIndex() {
                                     tick={{ ...AXIS_TICK, fontSize: 12 }}
                                     axisLine={false}
                                     tickLine={false}
-                                    width={170}
+                                    width={190}
                                     interval={0}
                                 />
                                 <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.06)' }} />
