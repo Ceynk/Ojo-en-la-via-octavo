@@ -165,7 +165,7 @@ export default function OperatorNavigate() {
     useEffect(() => {
         if (!position) return;
         const timeout = setTimeout(() => {
-            axios.post('/operador/ubicacion', { ...position, report_id: report.id })
+            axios.post('/operador/ubicacion', { latitude: position.lat, longitude: position.lng, report_id: report.id })
                 .then((res) => {
                     const newStatus = res.data?.status;
                     if (newStatus && newStatus !== report.status) {

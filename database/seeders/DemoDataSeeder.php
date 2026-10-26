@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Hash;
  * path, which getStorageUrl() passes through). Only inserts — never touches existing rows —
  * and skips itself entirely if the demo citizens already exist.
  *
+ * Emails go to <name>@demo.ojoenlavia.co, a domain that doesn't exist. Set DEMO_MAILBOX
+ * (e.g. you@gmail.com) to use plus-aliases of a real inbox instead (you+laura.gomez@gmail.com),
+ * so the report/resolution emails of a demo land somewhere rather than bouncing.
+ *
  * Run: php artisan db:seed --class=DemoDataSeeder
  */
 class DemoDataSeeder extends Seeder
@@ -26,7 +30,10 @@ class DemoDataSeeder extends Seeder
 
     public function run(): void
     {
-        if (DB::table('users')->where('email', 'like', '%@' . self::DEMO_DOMAIN)->exists()) {
+        // Either address style counts: a database seeded before DEMO_MAILBOX was set (or
+        // migrated to aliases afterwards) must not get a second copy of the demo data.
+        $marker = ['laura.gomez@' . self::DEMO_DOMAIN, $this->email('laura.gomez')];
+        if (DB::table('users')->whereIn('email', $marker)->exists()) {
             $this->command?->warn('Los datos de demostración ya existen; no se insertó nada.');
             return;
         }
@@ -77,7 +84,7 @@ class DemoDataSeeder extends Seeder
             $ids[] = DB::table('users')->insertGetId([
                 'first_name'      => $first,
                 'last_name'       => $last,
-                'email'           => $this->slug($first . '.' . explode(' ', $last)[0]) . '@' . self::DEMO_DOMAIN,
+                'email'           => $this->email($this->slug($first . '.' . explode(' ', $last)[0])),
                 'phone'           => '3' . mt_rand(10, 22) . mt_rand(1000000, 9999999),
                 'password'        => $password,
                 'role'            => 'ciudadano',
@@ -142,7 +149,7 @@ class DemoDataSeeder extends Seeder
 
         foreach ($defs as $name => $def) {
             $slug = $this->slug($name);
-            $email = $slug . '@' . self::DEMO_DOMAIN;
+            $email = $this->email($slug);
 
             $values = [
                 'description'      => $def['desc'],
@@ -176,7 +183,7 @@ class DemoDataSeeder extends Seeder
             $userId = DB::table('users')->insertGetId([
                 'first_name' => $first,
                 'last_name'  => $last,
-                'email'      => $this->slug($first) . '.' . $slug . '@' . self::DEMO_DOMAIN,
+                'email'      => $this->email($this->slug($first) . '.' . $slug),
                 'phone'      => '608' . mt_rand(6600000, 6699999),
                 'password'   => $password,
                 'role'       => 'entity',
@@ -499,6 +506,19 @@ class DemoDataSeeder extends Seeder
         $pool = array_values(array_diff($ids, [$exclude]));
 
         return $pool[array_rand($pool)];
+    }
+
+    private function email(string $local): string
+    {
+        $mailbox = env('DEMO_MAILBOX');
+
+        if (! $mailbox || ! str_contains($mailbox, '@')) {
+            return $local . '@' . self::DEMO_DOMAIN;
+        }
+
+        [$user, $domain] = explode('@', $mailbox, 2);
+
+        return "{$user}+{$local}@{$domain}";
     }
 
     private function slug(string $text): string
