@@ -58,6 +58,19 @@ function ChartTooltip({ active, payload, label }: any) {
     );
 }
 
+/* ── Chart styling ────────────────────────────────────────────── */
+// White axis labels on the dark-blue cards; the grid stays faint so it doesn't compete.
+const AXIS_TICK = { fontSize: 11, fill: '#ffffff' };
+const GRID_STROKE = 'rgba(255, 255, 255, 0.12)';
+
+// Trend: every day gets its own column so dates never overlap; when the range doesn't fit,
+// the chart scrolls sideways instead of squeezing the labels together.
+const TREND_PX_PER_DAY = 56;
+
+// Active users: 5 rows visible, the rest reachable by scrolling the card vertically.
+const USER_ROW_PX = 44;
+const USERS_VISIBLE = 5;
+
 /* ── Helpers ──────────────────────────────────────────────────── */
 function formatDay(day: string) {
     const d = new Date(day + 'T00:00:00');
@@ -336,8 +349,11 @@ export default function AnalyticsIndex() {
                     onHelp={() => setHelpOpen('trend')}
                 >
                     {trendData.length > 0 ? (
+                        <>
+                        <div className="chart-scroll overflow-x-auto pb-2">
+                        <div style={{ width: trendData.length * TREND_PX_PER_DAY, minWidth: '100%' }}>
                         <ResponsiveContainer width="100%" height={220}>
-                            <AreaChart data={trendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                            <AreaChart data={trendData} margin={{ top: 5, right: 16, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
@@ -348,27 +364,21 @@ export default function AnalyticsIndex() {
                                         <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                                 <XAxis
                                     dataKey="label"
-                                    tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+                                    tick={AXIS_TICK}
                                     axisLine={false}
                                     tickLine={false}
-                                    interval="preserveStartEnd"
+                                    interval={0}
                                 />
                                 <YAxis
-                                    tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+                                    tick={AXIS_TICK}
                                     axisLine={false}
                                     tickLine={false}
                                     allowDecimals={false}
                                 />
                                 <Tooltip content={<ChartTooltip />} />
-                                <Legend
-                                    iconType="circle"
-                                    iconSize={7}
-                                    wrapperStyle={{ fontSize: 11 }}
-                                    formatter={(v) => v === 'total' ? 'Total' : 'Resueltos'}
-                                />
                                 <Area
                                     type="monotone"
                                     dataKey="total"
@@ -391,6 +401,14 @@ export default function AnalyticsIndex() {
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
+                        </div>
+                        </div>
+                        {/* Legend outside the scroll area so it stays visible while scrolling. */}
+                        <div className="mt-2 flex items-center justify-center gap-4 text-[11px] text-white">
+                            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#3b82f6]" />Total</span>
+                            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#10b981]" />Resueltos</span>
+                        </div>
+                        </>
                     ) : (
                         <EmptyChart />
                     )}
@@ -468,16 +486,22 @@ export default function AnalyticsIndex() {
                 {/* Active users bar chart */}
                 <ChartCard title="Usuarios más activos (por reportes en rango)" delay={0.35} onHelp={() => setHelpOpen('users')}>
                     {usersData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={200}>
+                        <div
+                            className="chart-scroll overflow-y-auto pr-1"
+                            style={{ maxHeight: USERS_VISIBLE * USER_ROW_PX + 30 }}
+                        >
+                        <ResponsiveContainer width="100%" height={usersData.length * USER_ROW_PX + 30}>
                             <BarChart
                                 data={usersData}
                                 layout="vertical"
-                                margin={{ top: 0, right: 20, left: 10, bottom: 0 }}
+                                margin={{ top: 0, right: 24, left: 10, bottom: 0 }}
+                                barCategoryGap={10}
                             >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={GRID_STROKE} />
                                 <XAxis
                                     type="number"
-                                    tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+                                    orientation="top"
+                                    tick={AXIS_TICK}
                                     axisLine={false}
                                     tickLine={false}
                                     allowDecimals={false}
@@ -485,20 +509,22 @@ export default function AnalyticsIndex() {
                                 <YAxis
                                     type="category"
                                     dataKey="name"
-                                    tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+                                    tick={{ ...AXIS_TICK, fontSize: 12 }}
                                     axisLine={false}
                                     tickLine={false}
-                                    width={90}
+                                    width={170}
+                                    interval={0}
                                 />
                                 <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.06)' }} />
                                 <Bar
                                     dataKey="reportes"
                                     fill="#3b82f6"
                                     radius={[0, 4, 4, 0]}
-                                    maxBarSize={16}
+                                    maxBarSize={24}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
+                        </div>
                     ) : (
                         <EmptyChart message="Sin actividad en este rango" />
                     )}
