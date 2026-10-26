@@ -197,7 +197,7 @@ export default function AdminReportsIndex() {
                                             </span>
                                         </td>
 
-                                        <td className="max-w-[260px] px-5 py-3 text-secondary">
+                                        <td className="min-w-[220px] max-w-[260px] px-5 py-3 text-secondary">
                                             <div className="flex flex-col gap-1">
                                                 <span>{truncate(report.description, 70)}</span>
                                                 {report.possible_duplicate_of !== null && (

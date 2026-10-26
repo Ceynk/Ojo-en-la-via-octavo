@@ -114,7 +114,7 @@ export default function EntityDashboard() {
                                             </span>
                                         </td>
 
-                                        <td className="max-w-[260px] px-5 py-3 text-secondary">
+                                        <td className="min-w-[220px] max-w-[260px] px-5 py-3 text-secondary">
                                             {truncate(report.description, 70)}
                                         </td>
 
