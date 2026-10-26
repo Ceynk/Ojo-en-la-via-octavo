@@ -5,6 +5,8 @@ import type { Report } from '@/types';
 
 interface ShareReportButtonProps {
     report: Pick<Report, 'id' | 'description' | 'address_text' | 'incident_type'>;
+    /** Small icon sized for card footers; the menu opens upwards so the next card can't cover it. */
+    compact?: boolean;
 }
 
 /** Deep link that opens this report's detail on the map (see Home.tsx `?reporte=`). */
@@ -18,7 +20,7 @@ export function reportShareUrl(id: number): string {
  * with the main networks plus "copy link". Someone opening the link without a session is
  * sent to log in first and then lands on the report.
  */
-export default function ShareReportButton({ report }: ShareReportButtonProps) {
+export default function ShareReportButton({ report, compact = false }: ShareReportButtonProps) {
     const [open, setOpen] = useState(false);
     const [copied, setCopied] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
@@ -73,21 +75,25 @@ export default function ShareReportButton({ report }: ShareReportButtonProps) {
             <button
                 type="button"
                 onClick={handleClick}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-tertiary hover:text-primary"
+                className={
+                    compact
+                        ? 'flex items-center gap-1 text-xs text-muted transition-colors hover:text-primary'
+                        : 'flex h-8 w-8 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-tertiary hover:text-primary'
+                }
                 aria-label="Compartir reporte"
                 title="Compartir"
             >
-                <Share2 className="h-4 w-4" />
+                <Share2 className={compact ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
             </button>
 
             <AnimatePresence>
                 {open && (
                     <motion.div
-                        initial={{ opacity: 0, y: -6 }}
+                        initial={{ opacity: 0, y: compact ? 6 : -6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
+                        exit={{ opacity: 0, y: compact ? 6 : -6 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-10 z-10 w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 py-1 shadow-[var(--shadow-elevated)] backdrop-blur-md"
+                        className={`absolute right-0 ${compact ? 'bottom-7' : 'top-10'} z-10 w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-900/95 py-1 shadow-[var(--shadow-elevated)] backdrop-blur-md`}
                     >
                         {networks.map((n) => (
                             <a

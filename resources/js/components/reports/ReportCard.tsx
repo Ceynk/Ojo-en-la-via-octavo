@@ -5,6 +5,7 @@ import axios from 'axios';
 import { cn, formatDistanceKm, formatRelativeTime, getStorageUrl, truncate } from '@/lib/utils';
 import { getIncidentTypeStyle } from '@/lib/incidentTypeStyle';
 import StatusBadge from './StatusBadge';
+import ShareReportButton from './ShareReportButton';
 import type { Report, PageProps } from '@/types';
 import { usePage } from '@inertiajs/react';
 
@@ -162,6 +163,11 @@ export default function ReportCard({ report, onReportClick, distanceKm }: Report
                             <MessageSquare className="h-3.5 w-3.5" />
                             {report.comments_count ?? 0}
                         </span>
+
+                        {/* Sharing must not also open the report the card links to. */}
+                        <div onClick={(e) => e.stopPropagation()}>
+                            <ShareReportButton report={report} compact />
+                        </div>
 
                         {report.is_edited && (
                             <span title="Editado" className="text-muted">
