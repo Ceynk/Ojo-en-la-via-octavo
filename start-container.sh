@@ -6,7 +6,7 @@
 # report photo) and Reverb:
 #
 #   FrankenPHP/Caddy  :$PORT  ← public domain; /app/* (WebSockets) is proxied to Reverb
-#   Reverb            127.0.0.1:8080
+#   Reverb            127.0.0.1:6001 (not 8080: Railway usually sets $PORT=8080)
 #   queue:work        background
 #
 # See docs/DESPLIEGUE-RAILWAY.md.
@@ -32,7 +32,7 @@ supervise() {
   done
 }
 
-REVERB_INTERNAL_PORT="${REVERB_SERVER_PORT:-8080}"
+REVERB_INTERNAL_PORT="${REVERB_SERVER_PORT:-6001}"
 
 echo "Starting Reverb on 127.0.0.1:${REVERB_INTERNAL_PORT} ..."
 supervise php artisan reverb:start --host=127.0.0.1 --port="${REVERB_INTERNAL_PORT}" &
