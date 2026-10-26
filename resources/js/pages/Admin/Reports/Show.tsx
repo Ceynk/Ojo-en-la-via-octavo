@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import {
     ArrowLeft, MapPin, User, Clock, Heart, MessageSquare,
     Image as ImageIcon, ChevronLeft, ChevronRight, CheckCircle2,
-    Mail, ZoomIn, Loader2,
+    Mail, ZoomIn, Loader2, ShieldCheck, ShieldX,
 } from 'lucide-react';
 import AdminLayout from '@/components/shared/AdminLayout';
 import StatusBadge from '@/components/reports/StatusBadge';
@@ -48,6 +48,116 @@ const STATUS_BG: Record<ReportStatus, string> = {
     en_proceso: 'bg-orange-500',
     resuelto: 'bg-emerald-500',
 };
+
+/**
+ * RF-14 — content review. Runs alongside the status lifecycle (the report already went to
+ * its entity): "No válido" hides it from the public map, the entity panel and the
+ * operators' queue, and tells the citizen why.
+ */
+function ValidationCard({ report }: { report: Report }) {
+    const form = useForm({ validation_status: '' as 'valido' | 'invalido' | '', validation_notes: '' });
+    const [rejecting, setRejecting] = useState(false);
+
+    function submit(status: 'valido' | 'invalido') {
+        form.transform((data) => ({ ...data, validation_status: status }));
+        form.patch(`/admin/reports/${report.id}/validacion`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setRejecting(false);
+                form.reset();
+            },
+        });
+    }
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-xl border border-default bg-surface-primary p-5 shadow-[var(--shadow-card)]"
+        >
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-primary">
+                <ShieldCheck className="h-4 w-4 text-muted" />
+                Validación del contenido
+            </h3>
+
+            {report.validation_status ? (
+                <div
+                    className={cn(
+                        'mb-3 rounded-lg px-3 py-2 text-xs',
+                        report.validation_status === 'valido'
+                            ? 'bg-emerald-500/10 text-emerald-400'
+                            : 'bg-red-500/10 text-red-400',
+                    )}
+                >
+                    <p className="font-semibold">
+                        {report.validation_status === 'valido' ? 'Validado' : 'Marcado como no válido'}
+                        {report.validated_by && ` por ${report.validated_by.name}`}
+                        {report.validated_at && ` · ${formatRelativeTime(report.validated_at)}`}
+                    </p>
+                    {report.validation_notes && <p className="mt-1 opacity-90">{report.validation_notes}</p>}
+                </div>
+            ) : (
+                <p className="mb-3 text-xs text-muted">Este reporte aún no ha sido revisado.</p>
+            )}
+
+            {rejecting ? (
+                <div className="space-y-2">
+                    <textarea
+                        value={form.data.validation_notes}
+                        onChange={(e) => form.setData('validation_notes', e.target.value)}
+                        rows={3}
+                        maxLength={500}
+                        placeholder="Motivo (se le enviará al ciudadano): p. ej. la foto no muestra un problema vial"
+                        className="w-full resize-none rounded-lg border border-default bg-surface-secondary px-3 py-2 text-sm text-primary outline-none placeholder:text-muted focus:border-brand-500"
+                    />
+                    {form.errors.validation_notes && <p className="text-xs text-red-500">{form.errors.validation_notes}</p>}
+                    <div className="flex gap-2">
+                        <button
+                            type="button"
+                            onClick={() => submit('invalido')}
+                            disabled={form.processing}
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-600 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                        >
+                            {form.processing && <Loader2 className="h-3 w-3 animate-spin" />}
+                            Confirmar no válido
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setRejecting(false)}
+                            className="rounded-lg border border-default px-3 py-2 text-xs text-secondary transition-colors hover:bg-surface-tertiary"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="flex gap-2">
+                    {report.validation_status !== 'valido' && (
+                        <button
+                            type="button"
+                            onClick={() => submit('valido')}
+                            disabled={form.processing}
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 py-2 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+                        >
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            Validar
+                        </button>
+                    )}
+                    {report.validation_status !== 'invalido' && (
+                        <button
+                            type="button"
+                            onClick={() => setRejecting(true)}
+                            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-500/40 py-2 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/10"
+                        >
+                            <ShieldX className="h-3.5 w-3.5" />
+                            No es válido
+                        </button>
+                    )}
+                </div>
+            )}
+        </motion.div>
+    );
+}
 
 export default function AdminReportShow() {
     const { report, auth } = usePage<ShowProps>().props;
@@ -296,8 +406,9 @@ export default function AdminReportShow() {
                         )}
                     </div>
 
-                    {/* ─── Right column: comments + history ─── */}
+                    {/* ─── Right column: validation + comments + history ─── */}
                     <div className="space-y-4">
+                        <ValidationCard report={report} />
 
                         {/* Comments */}
                         <motion.div

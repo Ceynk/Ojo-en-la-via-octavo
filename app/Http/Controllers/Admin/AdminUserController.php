@@ -25,7 +25,7 @@ class AdminUserController extends Controller
 
         return Inertia::render('Admin/Users/Index', [
             'users'   => $users,
-            'filters' => $request->only(['search']),
+            'filters' => (object) $request->only(['search']),
         ]);
     }
 

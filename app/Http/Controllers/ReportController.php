@@ -8,6 +8,8 @@ use App\Jobs\NotifyEntitiesOfReport;
 use App\Models\Report;
 use App\Models\ReportImage;
 use App\Services\NotificationService;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,19 +28,21 @@ class ReportController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Report::with(['user:id,first_name,last_name', 'incidentType:id,name', 'images'])
-            ->withCount(['likes', 'comments'])
+            ->withCount(['likes', 'comments', 'confirmations'])
             ->withExists([
                 'likes as user_liked' => fn ($q) => $q->where('user_id', auth()->id()),
             ])
+            ->visibleTo($request->user())
             ->when($request->filled('status'), fn ($q) => $q->where('status', $request->status))
             ->when($request->filled('incident_type_id'), fn ($q) => $q->where('incident_type_id', $request->incident_type_id))
             ->when($request->filled('search'), fn ($q) => $q->where('description', 'like', "%{$request->search}%"))
-            ->when($request->boolean('mine'), fn ($q) => $q->where('user_id', auth()->id()))
-            ->when(
-                $request->input('sort') === 'comments',
-                fn ($q) => $q->orderByDesc('comments_count')->latest(),
-                fn ($q) => $q->latest(),
-            );
+            ->when($request->boolean('mine'), fn ($q) => $q->where('user_id', auth()->id()));
+
+        match ($request->input('sort')) {
+            'comments' => $query->orderByDesc('comments_count')->latest(),
+            'support'  => $query->orderBySupport()->latest(),
+            default    => $query->latest(),
+        };
 
         if ($request->boolean('paginate')) {
             return response()->json($query->paginate(12));
@@ -47,8 +51,18 @@ class ReportController extends Controller
         return response()->json($query->get());
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
+        // Retry of a report this device already got through (e.g. the response was lost on a
+        // weak signal, or the offline queue re-sent it): answer as if it was just created.
+        if ($request->filled('client_uuid')) {
+            $existing = $request->user()->reports()->where('client_uuid', $request->input('client_uuid'))->first();
+
+            if ($existing) {
+                return $this->storedResponse($request, $existing);
+            }
+        }
+
         $data = $request->validate([
             'incident_type_id' => ['required', 'exists:incident_types,id'],
             'description'      => ['required', 'string', 'max:800'],
@@ -62,9 +76,34 @@ class ReportController extends Controller
             // as "the same report", just recorded for admins to review.
             'possible_duplicate_of' => ['nullable', 'integer', 'exists:reports,id'],
             'duplicate_similarity'  => ['nullable', 'numeric', 'between:0,1'],
+            // Offline support: idempotency key from the device, and when the citizen actually
+            // filled the report in (it may reach us hours later, once there is signal again).
+            'client_uuid'           => ['nullable', 'uuid'],
+            'offline_created_at'    => ['nullable', 'date'],
         ]);
 
-        $report = $request->user()->reports()->create(collect($data)->except('media')->all());
+        try {
+            $report = $request->user()->reports()->create(collect($data)->except(['media', 'offline_created_at'])->all());
+        } catch (UniqueConstraintViolationException $e) {
+            // Two retries of the same queued report raced each other; the other one won.
+            $existing = $request->user()->reports()->where('client_uuid', $data['client_uuid'] ?? null)->first();
+
+            if (! $existing) {
+                throw $e;
+            }
+
+            return $this->storedResponse($request, $existing);
+        }
+
+        // Only trusted as a hint: a phone clock that's off must never reject the report, so an
+        // out-of-range value is just ignored and the report keeps the server's own timestamp.
+        if (! empty($data['offline_created_at'])) {
+            $reportedAt = Carbon::parse($data['offline_created_at']);
+
+            if ($reportedAt->isPast() && $reportedAt->greaterThan(now()->subDays(30))) {
+                $report->forceFill(['created_at' => $reportedAt])->save();
+            }
+        }
 
         $this->storeMediaFiles($report, $request);
 
@@ -94,6 +133,19 @@ class ReportController extends Controller
             Log::warning('Broadcast failed for ReportCreated', ['report_id' => $report->id, 'error' => $e->getMessage()]);
         }
 
+        return $this->storedResponse($request, $report);
+    }
+
+    /**
+     * Inertia form submits get the usual redirect; the offline sync queue (plain axios,
+     * Accept: application/json) gets JSON so it can tell success from a login redirect.
+     */
+    private function storedResponse(Request $request, Report $report): RedirectResponse|JsonResponse
+    {
+        if ($request->wantsJson() && ! $request->header('X-Inertia')) {
+            return response()->json(['id' => $report->id, 'client_uuid' => $report->client_uuid], 201);
+        }
+
         return redirect()->route('citizen.home')->with('success', 'Reporte creado exitosamente.');
     }
 
@@ -106,7 +158,7 @@ class ReportController extends Controller
             'statusHistory.changedBy:id,first_name,last_name',
         ]);
 
-        $report->loadCount(['likes', 'comments']);
+        $report->loadCount(['likes', 'comments', 'confirmations']);
         $report->user_liked = $report->likes()->where('user_id', auth()->id())->exists();
 
         return response()->json($report);

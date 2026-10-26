@@ -17,6 +17,12 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Only SQLite repoints foreign keys on rename; on PostgreSQL/MySQL the status
+        // migration alters the column in place, so there is nothing dangling to repair.
+        if (DB::getDriverName() !== 'sqlite') {
+            return;
+        }
+
         Schema::disableForeignKeyConstraints();
 
         Schema::rename('report_images', 'report_images_old');
@@ -70,4 +76,5 @@ return new class extends Migration
         // Not reversible — this migration only repairs a dangling foreign key reference,
         // there is no meaningful "old" state to roll back to.
     }
+
 };

@@ -1,0 +1,60 @@
+@startuml
+title Crear un reporte - Diagrama de secuencia (simplificado)
+autonumber
+
+' Estilo: líneas de vida y barras de activación bien visibles
+<style>
+lifeLine {
+  LineColor #000000
+  LineThickness 2.5
+  LineStyle 8-5
+  BackGroundColor #8FD3F0
+}
+participant, actor, database, queue {
+  BackGroundColor #FFFFFF
+  LineColor #000000
+  LineThickness 2
+}
+arrow {
+  LineColor #000000
+  LineThickness 1.5
+}
+</style>
+
+actor Ciudadano as C
+participant "App web" as A
+participant "Servidor" as S
+participant "IA (Gemini)" as IA
+database "Base de datos" as DB
+actor "Entidad pública" as E
+
+C -> A ++ : Llena reporte (foto, descripción, ubicación)
+A -> S ++ : Pide sugerencia de tipo
+S -> IA ++ : Analiza foto y descripción
+IA --> S -- : Tipo de incidente sugerido
+S --> A -- : Sugerencia
+
+C -> A : Envía reporte
+A -> S ++ : Verificar duplicados
+S -> IA ++ : Compara con reportes cercanos
+IA --> S -- : Posibles duplicados
+S --> A -- : Resultado
+
+alt Hay un reporte igual
+  C -> A : Confirma el reporte existente
+  A -> S ++ : Registrar confirmación
+  S -> DB ++ : Guarda confirmación
+  deactivate DB
+  S --> A -- : Confirmación registrada
+else Es un reporte nuevo
+  A -> S ++ : Crear reporte
+  S -> DB ++ : Guarda reporte y fotos
+  deactivate DB
+  S --> A : Reporte creado
+  A --> C : Mensaje de éxito
+  S ->> E ++ : Notifica por correo a la entidad
+  deactivate E
+  deactivate S
+end
+deactivate A
+@enduml

@@ -5,7 +5,13 @@ import axios from 'axios';
 import { X, Camera, ImageIcon, Loader2, AlertTriangle, Sparkles, Info, Copy, MapPin } from 'lucide-react';
 import { cn, getStorageUrl } from '@/lib/utils';
 import { compressImage } from '@/lib/imageCompression';
+import { enqueueReport } from '@/lib/offlineReports';
 import type { PageProps } from '@/types';
+
+// A weak signal can leave an upload hanging forever. If no upload progress arrives for this
+// long, the submit is abandoned and the report goes to the offline queue instead (the shared
+// client_uuid makes it safe even if the stalled request did reach the server after all).
+const STALLED_UPLOAD_MS = 20_000;
 
 interface AiSuggestion {
     suggested_incident_type_id: number | null;
@@ -44,29 +50,27 @@ interface ReportFormProps {
 }
 
 export default function ReportForm({ coords, onClose, onSuccess }: ReportFormProps) {
-    const { incident_types } = usePage<PageProps>().props;
+    const { incident_types, auth } = usePage<PageProps>().props;
     const fileRef = useRef<HTMLInputElement>(null);
     const [compressing, setCompressing] = useState(false);
     const [submitError, setSubmitError] = useState<string | null>(null);
 
-    // Catch hard failures (network errors, unhandled 500s) that don't come back
-    // as Inertia validation errors, without losing the open form/drawer state.
+    // Catch hard failures (unhandled 500s) that don't come back as Inertia validation
+    // errors, without losing the open form/drawer state. Network failures are handled
+    // per-submit (see submitReport) by queueing the report for later instead.
     useEffect(() => {
         const offException = router.on('httpException', () => {
             setSubmitError('No se pudo registrar el incidente. Intenta de nuevo.');
             return false;
         });
-        const offNetwork = router.on('networkError', () => {
-            setSubmitError('No se pudo enviar el reporte. Verifica tu conexión e intenta de nuevo.');
-            return false;
-        });
         return () => {
             offException();
-            offNetwork();
         };
     }, []);
 
     const form = useForm({
+        // Idempotency key: same value whether this goes out now or later from the offline queue.
+        client_uuid: crypto.randomUUID(),
         incident_type_id: '' as string | number,
         description: '',
         latitude: '' as string | number,
@@ -160,9 +164,73 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
     const [confirmingDuplicateId, setConfirmingDuplicateId] = useState<number | null>(null);
     const [duplicateModalError, setDuplicateModalError] = useState<string | null>(null);
 
+    // Set when the citizen saw a possible-duplicate alert and chose to continue anyway; kept
+    // here too (not only in form.transform) so the offline queue carries it as well.
+    const duplicateOfRef = useRef<{ report_id: number; similarity: number } | null>(null);
+
+    // Without a server to validate, check locally what POST /reports would reject, so a
+    // queued report can't come back as a 422 hours later when the citizen is long gone.
+    function validateLocally(): boolean {
+        form.clearErrors();
+        const errors: Partial<Record<'incident_type_id' | 'description' | 'address_text', string>> = {};
+        if (!form.data.incident_type_id) errors.incident_type_id = 'Selecciona el tipo de incidente.';
+        if (!form.data.description.trim()) errors.description = 'La descripción es obligatoria.';
+        else if (form.data.description.length > 800) errors.description = 'Máximo 800 caracteres.';
+        if (!form.data.address_text.trim()) errors.address_text = 'La dirección es obligatoria.';
+        else if (form.data.address_text.length > 300) errors.address_text = 'Máximo 300 caracteres.';
+        form.setError(errors);
+        return Object.keys(errors).length === 0 && coords !== null;
+    }
+
+    const queuedRef = useRef(false);
+
+    async function queueForLater() {
+        if (queuedRef.current || !auth.user) return;
+        queuedRef.current = true;
+        try {
+            await enqueueReport({
+                client_uuid: form.data.client_uuid,
+                user_id: auth.user.id,
+                incident_type_id: Number(form.data.incident_type_id),
+                description: form.data.description,
+                latitude: Number(form.data.latitude),
+                longitude: Number(form.data.longitude),
+                address_text: form.data.address_text,
+                possible_duplicate_of: duplicateOfRef.current?.report_id ?? null,
+                duplicate_similarity: duplicateOfRef.current?.similarity ?? null,
+                media: mediaItems.map((m) => ({ blob: m.file, name: m.file.name, type: m.file.type })),
+                created_at: new Date().toISOString(),
+                attempts: 0,
+            });
+            // Same outcome as an online submit: the form closes and the report shows on the map.
+            onSuccess?.();
+            onClose();
+        } catch {
+            queuedRef.current = false;
+            setSubmitError('No se pudo enviar el reporte. Verifica tu conexión e intenta de nuevo.');
+        }
+    }
+
     function submitReport() {
+        if (!navigator.onLine) {
+            if (validateLocally()) void queueForLater();
+            return;
+        }
+
+        let lastProgressAt = Date.now();
+        const watchdog = window.setInterval(() => {
+            if (Date.now() - lastProgressAt > STALLED_UPLOAD_MS) {
+                window.clearInterval(watchdog);
+                form.cancel();
+                if (validateLocally()) void queueForLater();
+            }
+        }, 2_000);
+
         form.post('/reports', {
             forceFormData: true,
+            onProgress: () => {
+                lastProgressAt = Date.now();
+            },
             onSuccess: () => {
                 onSuccess?.();
                 onClose();
@@ -172,6 +240,11 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                     setSubmitError('No se pudo registrar el incidente. Intenta de nuevo.');
                 }
             },
+            onNetworkError: () => {
+                if (validateLocally()) void queueForLater();
+                return false;
+            },
+            onFinish: () => window.clearInterval(watchdog),
         });
     }
 
@@ -181,7 +254,9 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
 
         const description = form.data.description.trim();
 
-        if (!description || !form.data.incident_type_id || !coords) {
+        // Duplicate detection needs the server; offline it's skipped (the admins still see
+        // possible duplicates later through the embeddings computed on arrival).
+        if (!description || !form.data.incident_type_id || !coords || !navigator.onLine) {
             submitReport();
             return;
         }
@@ -198,9 +273,11 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                 payload.append('photo', firstPhoto);
             }
 
+            // Short timeout: on a weak signal this optional check must not hold the submit hostage.
             const res = await axios.post<{ duplicates: DuplicateCandidate[] }>(
                 '/reportes/verificar-duplicados',
                 payload,
+                { timeout: 8_000 },
             );
             const duplicates = res.data.duplicates ?? [];
 
@@ -223,6 +300,7 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
         setDuplicateModalError(null);
 
         if (top) {
+            duplicateOfRef.current = { report_id: top.report_id, similarity: top.similarity };
             form.transform((data) => ({
                 ...data,
                 possible_duplicate_of: top.report_id,
@@ -301,12 +379,12 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
     const hasCoords = coords !== null;
 
     return (
-        <div className="flex h-full flex-col bg-slate-900/95 text-white backdrop-blur-2xl">
+        <div className="flex h-full flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 bg-slate-950/40">
+            <div className="flex items-center justify-between border-b border-[#E5E7EB] px-5 py-4">
                 <div>
-                    <h2 className="text-base font-bold text-white tracking-tight">Registrar incidente</h2>
-                    <p className="text-xs text-slate-400">
+                    <h2 className="text-base font-semibold text-[#1F2937]">Registrar incidente</h2>
+                    <p className="text-xs text-gray-500">
                         {hasCoords
                             ? 'Ubicación seleccionada en el mapa'
                             : 'Haz clic en el mapa para seleccionar la ubicación'}
@@ -315,7 +393,7 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                 <button
                     type="button"
                     onClick={onClose}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
                 >
                     <X className="h-4 w-4" />
                 </button>
@@ -325,7 +403,7 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
             <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-4 overflow-y-auto p-5">
                 {/* Incident type */}
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-slate-200" htmlFor="incident_type_id">
+                    <label className="text-sm font-medium text-[#1F2937]" htmlFor="incident_type_id">
                         Tipo de incidente *
                     </label>
                     <select
@@ -334,31 +412,31 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                         onChange={(e) => form.setData('incident_type_id', e.target.value)}
                         disabled={!hasPhoto}
                         className={cn(
-                            'w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-all',
-                            'bg-slate-950/60 text-white',
-                            'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25',
-                            'disabled:cursor-not-allowed disabled:bg-slate-900/40 disabled:text-slate-500',
+                            'w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors',
+                            'bg-white text-[#1F2937]',
+                            'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20',
+                            'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400',
                             form.errors.incident_type_id
-                                ? 'border-red-400/80 ring-2 ring-red-400/20'
-                                : 'border-white/15 hover:border-white/25',
+                                ? 'border-red-400'
+                                : 'border-[#E5E7EB]',
                         )}
                     >
-                        <option value="" className="bg-slate-900 text-slate-400">Seleccione un tipo</option>
+                        <option value="">Seleccione un tipo</option>
                         {incident_types.map((t) => (
-                            <option key={t.id} value={t.id} className="bg-slate-900 text-white">
+                            <option key={t.id} value={t.id}>
                                 {t.name}
                             </option>
                         ))}
                     </select>
                     {form.errors.incident_type_id && (
-                        <p className="text-xs text-red-400">{form.errors.incident_type_id}</p>
+                        <p className="text-xs text-red-500">{form.errors.incident_type_id}</p>
                     )}
                     {!hasPhoto && (
-                        <p className="text-[11px] text-slate-400">Sube una foto para clasificar automáticamente con IA.</p>
+                        <p className="text-[11px] text-gray-500">Sube una foto para clasificar automáticamente.</p>
                     )}
                     {showAiClassifiedNote && (
-                        <p className="flex items-center gap-1.5 rounded-xl border border-brand-500/30 bg-brand-500/10 px-3 py-2 text-xs font-medium text-brand-300">
-                            <Sparkles className="h-3.5 w-3.5 shrink-0 text-brand-400" />
+                        <p className="flex items-center gap-1 text-[11px] text-brand-600">
+                            <Sparkles className="h-3 w-3" />
                             Clasificado automáticamente por IA a partir de la foto — puedes cambiarlo si no es correcto.
                         </p>
                     )}
@@ -366,7 +444,7 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
 
                 {/* Description */}
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-slate-200" htmlFor="description">
+                    <label className="text-sm font-medium text-[#1F2937]" htmlFor="description">
                         Descripción *
                     </label>
                     <textarea
@@ -376,25 +454,25 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                         onChange={(e) => form.setData('description', e.target.value)}
                         placeholder="Describe el incidente con detalle…"
                         className={cn(
-                            'w-full resize-none rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-all',
-                            'bg-slate-950/60 text-white placeholder:text-slate-500',
-                            'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25',
-                            form.errors.description ? 'border-red-400/80 ring-2 ring-red-400/20' : 'border-white/15 hover:border-white/25',
+                            'w-full resize-none rounded-lg border px-3 py-2 text-sm outline-none transition-colors',
+                            'bg-white text-[#1F2937] placeholder:text-[#9CA3AF]',
+                            'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20',
+                            form.errors.description ? 'border-red-400' : 'border-[#E5E7EB]',
                         )}
                     />
                     <div className="flex items-center justify-between">
                         {form.errors.description ? (
-                            <p className="text-xs text-red-400">{form.errors.description}</p>
+                            <p className="text-xs text-red-500">{form.errors.description}</p>
                         ) : (
                             <span />
                         )}
-                        <span className="text-[10px] text-slate-400">{form.data.description.length}/800</span>
+                        <span className="text-[10px] text-gray-600">{form.data.description.length}/800</span>
                     </div>
                 </div>
 
                 {/* Address text */}
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-slate-200" htmlFor="address_text">
+                    <label className="text-sm font-medium text-[#1F2937]" htmlFor="address_text">
                         Dirección / referencia *
                     </label>
                     <input
@@ -404,39 +482,39 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                         onChange={(e) => form.setData('address_text', e.target.value)}
                         placeholder="Ej: Cra 30 con Calle 42, frente al parque"
                         className={cn(
-                            'w-full rounded-xl border px-3.5 py-2.5 text-sm outline-none transition-all',
-                            'bg-slate-950/60 text-white placeholder:text-slate-500',
-                            'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/25',
-                            form.errors.address_text ? 'border-red-400/80 ring-2 ring-red-400/20' : 'border-white/15 hover:border-white/25',
+                            'w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors',
+                            'bg-white text-[#1F2937] placeholder:text-[#9CA3AF]',
+                            'focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20',
+                            form.errors.address_text ? 'border-red-400' : 'border-[#E5E7EB]',
                         )}
                     />
                     {form.errors.address_text && (
-                        <p className="text-xs text-red-400">{form.errors.address_text}</p>
+                        <p className="text-xs text-red-500">{form.errors.address_text}</p>
                     )}
                 </div>
 
                 {/* Photo/video capture */}
                 <div className="flex flex-col gap-1.5">
-                    <label className="text-sm font-medium text-slate-200">Fotos o videos</label>
+                    <label className="text-sm font-medium text-[#1F2937]">Fotos o videos</label>
 
                     {mediaItems.length > 0 && (
                         <div className="grid grid-cols-3 gap-2">
                             {mediaItems.map((item) => (
-                                <div key={item.id} className="relative aspect-square overflow-hidden rounded-xl border border-white/10">
+                                <div key={item.id} className="relative aspect-square overflow-hidden rounded-lg">
                                     {item.kind === 'video' ? (
                                         <video src={item.previewUrl} className="h-full w-full bg-black object-cover" />
                                     ) : (
                                         <img src={item.previewUrl} alt="Preview" className="h-full w-full object-cover" />
                                     )}
                                     {item.file === firstPhoto && (
-                                        <span className="absolute bottom-1 left-1 rounded-md bg-black/70 px-1.5 py-0.5 text-[9px] font-semibold text-amber-300 border border-amber-400/30">
-                                            Principal
+                                        <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-medium text-white">
+                                            Foto principal
                                         </span>
                                     )}
                                     <button
                                         type="button"
                                         onClick={() => removeMediaItem(item.id)}
-                                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-black/90"
+                                        className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80"
                                     >
                                         <X className="h-3 w-3" />
                                     </button>
@@ -446,9 +524,9 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                     )}
 
                     {compressing && (
-                        <div className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-white/15 bg-slate-950/40 py-4 text-slate-300">
-                            <Loader2 className="h-5 w-5 animate-spin text-brand-400" />
-                            <span className="text-xs font-medium">Optimizando imagen…</span>
+                        <div className="flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed border-[#E5E7EB] py-4 text-gray-500">
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            <span className="text-xs">Optimizando imagen…</span>
                         </div>
                     )}
 
@@ -456,18 +534,18 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                         type="button"
                         onClick={() => fileRef.current?.click()}
                         className={cn(
-                            'flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed py-6',
-                            'bg-slate-950/30 text-slate-400 transition-all hover:border-brand-400/50 hover:bg-slate-950/50 hover:text-brand-300',
-                            form.errors.media ? 'border-red-400/80 ring-2 ring-red-400/20' : 'border-white/15',
+                            'flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed py-6',
+                            'text-gray-500 transition-colors hover:border-brand-400 hover:text-brand-600',
+                            form.errors.media ? 'border-red-400' : 'border-[#E5E7EB]',
                         )}
                     >
-                        <Camera className="h-5 w-5 text-brand-400" />
-                        <span className="text-xs font-medium text-slate-200">
+                        <Camera className="h-5 w-5" />
+                        <span className="text-xs">
                             {mediaItems.length > 0
                                 ? 'Agregar otra foto o video'
                                 : 'Tomar foto o video, o elegir de la galería'}
                         </span>
-                        <span className="text-[10px] text-slate-400">JPG, PNG, WEBP, MP4, MOV, WEBM · máx 50 MB c/u</span>
+                        <span className="text-[10px]">JPG, PNG, WEBP, MP4, MOV, WEBM · máx 50 MB c/u</span>
                     </button>
 
                     <input
@@ -480,10 +558,10 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                         onChange={handleMediaChange}
                     />
                     {form.errors.media && (
-                        <p className="text-xs text-red-400">{form.errors.media}</p>
+                        <p className="text-xs text-red-500">{form.errors.media}</p>
                     )}
                     {mediaItems.length > 1 && (
-                        <p className="text-[11px] text-slate-400">
+                        <p className="text-[11px] text-gray-500">
                             La IA solo revisa la primera foto para clasificar y buscar duplicados.
                         </p>
                     )}
@@ -491,16 +569,16 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
 
                 {/* AI photo/category mismatch warning (soft, non-blocking) */}
                 {showPhotoWarning && (
-                    <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-xs text-amber-300">
-                        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
+                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-700">
+                        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         {aiSuggestion?.warning_message}
                     </div>
                 )}
 
                 {/* Submit error */}
                 {submitError && (
-                    <div className="flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-xs text-red-300">
-                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-400" />
+                    <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-xs text-red-700">
+                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         {submitError}
                     </div>
                 )}
@@ -510,8 +588,8 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                     type="submit"
                     disabled={form.processing || compressing || checkingDuplicates || !hasCoords}
                     className={cn(
-                        'mt-auto flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold',
-                        'bg-gradient-to-r from-brand-600 to-brand-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:from-brand-500 hover:to-brand-600 hover:shadow-[0_0_30px_rgba(37,99,235,0.65)]',
+                        'mt-auto flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold',
+                        'bg-brand-600 text-white transition-colors hover:bg-brand-700',
                         'disabled:cursor-not-allowed disabled:opacity-50',
                     )}
                 >
@@ -523,7 +601,7 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                     ) : checkingDuplicates ? (
                         <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            Verificando duplicados…
+                            Verificando…
                         </>
                     ) : (
                         <>
@@ -536,46 +614,46 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
 
             {/* Possible-duplicate modal */}
             {duplicateCandidates && duplicateCandidates.length > 0 && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.97 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-white/15 bg-slate-900/95 text-white shadow-2xl backdrop-blur-2xl"
+                        className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-xl bg-white shadow-xl"
                     >
-                        <div className="border-b border-white/10 px-5 py-4 bg-slate-950/40">
-                            <h3 className="flex items-center gap-2 text-sm font-bold text-white">
-                                <Copy className="h-4 w-4 text-brand-400" />
+                        <div className="border-b border-[#E5E7EB] px-5 py-4">
+                            <h3 className="flex items-center gap-2 text-sm font-semibold text-[#1F2937]">
+                                <Copy className="h-4 w-4 text-brand-600" />
                                 Encontramos reportes parecidos cerca
                             </h3>
-                            <p className="mt-1 text-xs text-slate-400">
+                            <p className="mt-1 text-xs text-gray-500">
                                 Puede que este problema ya haya sido reportado. Revisa antes de continuar.
                             </p>
                         </div>
 
                         <div className="flex-1 space-y-3 overflow-y-auto p-5">
                             {duplicateCandidates.map((dup) => (
-                                <div key={dup.report_id} className="flex gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                                <div key={dup.report_id} className="flex gap-3 rounded-lg border border-[#E5E7EB] p-3">
                                     {dup.photo_path && (
                                         <img
                                             src={getStorageUrl(dup.photo_path)}
                                             alt="Reporte similar"
-                                            className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                                            className="h-16 w-16 shrink-0 rounded-md object-cover"
                                         />
                                     )}
                                     <div className="flex flex-1 flex-col gap-1 text-xs">
-                                        <p className="line-clamp-2 font-medium text-slate-200">{dup.description}</p>
-                                        <span className="flex items-center gap-1 text-slate-400">
-                                            <MapPin className="h-3 w-3 text-slate-500" />
+                                        <p className="line-clamp-2 text-[#1F2937]">{dup.description}</p>
+                                        <span className="flex items-center gap-1 text-gray-500">
+                                            <MapPin className="h-3 w-3" />
                                             {dup.address_text} · a {Math.round(dup.distance_meters)} m
                                         </span>
-                                        <span className="font-semibold text-brand-400">
+                                        <span className="text-brand-600">
                                             {Math.round(dup.similarity * 100)}% de similitud
                                         </span>
                                         <button
                                             type="button"
                                             onClick={() => confirmSameProblem(dup.report_id)}
                                             disabled={confirmingDuplicateId !== null}
-                                            className="mt-1 flex w-fit items-center gap-1.5 rounded-lg bg-brand-600 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-brand-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                            className="mt-1 flex w-fit items-center gap-1.5 rounded-md bg-brand-600 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
                                         >
                                             {confirmingDuplicateId === dup.report_id && (
                                                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -587,18 +665,18 @@ export default function ReportForm({ coords, onClose, onSuccess }: ReportFormPro
                             ))}
 
                             {duplicateModalError && (
-                                <p className="text-xs font-medium text-red-400">{duplicateModalError}</p>
+                                <p className="text-xs text-red-500">{duplicateModalError}</p>
                             )}
                         </div>
 
-                        <div className="border-t border-white/10 px-5 py-4 bg-slate-950/40">
+                        <div className="border-t border-[#E5E7EB] px-5 py-4">
                             <button
                                 type="button"
                                 onClick={continueDespiteDuplicate}
                                 disabled={confirmingDuplicateId !== null}
-                                className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                                className="w-full rounded-lg border border-[#E5E7EB] py-2.5 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                No es igual, continuar con mi reporte
+                                No es igual, continuar
                             </button>
                         </div>
                     </motion.div>

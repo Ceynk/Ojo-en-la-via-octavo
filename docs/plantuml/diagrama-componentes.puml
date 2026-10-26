@@ -1,0 +1,77 @@
+@startuml
+title Ojo en la Vía - Diagrama de componentes
+skinparam componentStyle uml2
+
+' Notación: conectores de ensamble (ball-and-socket), sin flechas.
+'   A -(0- B  =>  A requiere la interfaz (socket "(") que B provee (lollipop "O").
+
+actor Ciudadano
+actor "Admin / Operador" as Staff
+actor "Entidad pública" as Ent
+
+package "Frontend (React + TypeScript)" {
+  [Páginas\n(Ciudadano, Admin,\nEntidad, Operador)] as Pages
+  [Componentes UI\n(reportes, mapa, formularios)] as UI
+  [Estado del cliente\n(Zustand + React Query)] as State
+  [Mapa\n(Leaflet)] as Map
+  [Cliente tiempo real\n(Laravel Echo)] as Echo
+}
+
+package "Backend (Laravel)" {
+  [Rutas + Middleware\n(auth, admin)] as Routes
+  [Controladores] as Ctrl
+  [Políticas\n(autorización)] as Pol
+  [Servicio de notificaciones] as NotifSvc
+  [Servicios IA\n(clasificación y duplicados)] as AISvc
+  [Jobs en cola\n(notificar entidades,\ngenerar embeddings)] as Jobs
+  [Eventos\n(ReportCreated,\nReportStatusChanged)] as Events
+  [Modelos Eloquent] as Models
+}
+
+database "Base de datos\n(SQLite)" as DB
+queue "Cola de trabajos" as Queue
+folder "Almacenamiento\nde fotos/videos" as Storage
+node "Reverb\n(servidor WebSocket)" as Reverb
+
+cloud "Servicios externos" {
+  [API de Gemini\n(Google)] as Gemini
+  [OpenStreetMap\n(mapas)] as OSM
+  [Nominatim\n(direcciones)] as Nominatim
+  [Servidor de correo] as Mail
+}
+
+' Actores: asociación simple (no son componentes)
+Ciudadano -- Pages
+Staff -- Pages
+Ent -- Pages : panel de entidad
+Mail -- Ent : correo de nuevo reporte
+
+' Frontend
+Pages -(0- UI : vistas
+UI -(0- State : datos de reportes
+UI -(0- Map : mapa
+Echo -(0- State : actualiza en vivo
+Map -(0- OSM : teselas
+Map -(0- Nominatim : geocodificación
+
+' Frontend <-> Backend
+State -(0- Routes : HTTP (Inertia)
+Echo -(0- Reverb : WebSocket
+
+' Backend
+Routes -(0- Ctrl : peticiones
+Ctrl -(0- Pol : autorización
+Ctrl -(0- Models : persistencia
+Ctrl -(0- AISvc : clasificar
+Ctrl -(0- Events : emitir eventos
+Ctrl -(0- Queue : despacha jobs
+Ctrl -(0- Storage : guarda archivos
+Jobs -(0- Queue : consume jobs
+Jobs -(0- NotifSvc : notificar
+Jobs -(0- AISvc : embeddings
+Jobs -(0- Mail : SMTP
+NotifSvc -(0- Models : persistencia
+AISvc -(0- Gemini : API IA
+Models -(0- DB : SQL
+Events -(0- Reverb : broadcast
+@enduml

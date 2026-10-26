@@ -14,6 +14,7 @@ import NearbyReportsPanel, { RADIUS_OPTIONS_KM } from '@/components/reports/Near
 import MapToolbar, { type DateRangeFilter } from '@/components/reports/MapToolbar';
 import { FlashMessages } from '@/components/ui/alert';
 import { usePublicChannel } from '@/hooks/useEcho';
+import { useQueuedReports } from '@/lib/offlineReports';
 import type { PageProps, Report, ReportStatus } from '@/types';
 
 interface Coords {
@@ -87,11 +88,15 @@ async function reverseGeocode(lat: number, lng: number): Promise<string> {
 }
 
 export default function Home() {
-    const { incident_types } = usePage<PageProps>().props;
+    const { incident_types, auth } = usePage<PageProps>().props;
     const [formOpen, setFormOpen] = useState(false);
     const [coords, setCoords] = useState<Coords | null>(null);
     const [locating, setLocating] = useState(false);
-    const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
+    // A shared link (/inicio?reporte=ID, see ShareReportButton) opens that report directly.
+    const [selectedReportId, setSelectedReportId] = useState<number | null>(() => {
+        const id = Number(new URLSearchParams(window.location.search).get('reporte'));
+        return Number.isInteger(id) && id > 0 ? id : null;
+    });
     const [previewReportId, setPreviewReportId] = useState<number | null>(null);
     const [filters, setFilters] = useState<Filters>({ status: '', incident_type_id: '', mine: false });
     const [dateRange, setDateRange] = useState<DateRangeFilter>('all');
@@ -142,9 +147,45 @@ export default function Home() {
         staleTime: 1000 * 60,
     });
 
+    // Reports made without signal live on the device until they're sent. Show them on the
+    // map like any other report (negative ids so they can't clash with real ones) so that,
+    // from the citizen's point of view, their report is simply there.
+    const queuedReports = useQueuedReports(auth.user?.id);
+    const pendingAsReports = useMemo<Report[]>(
+        () =>
+            queuedReports
+                .filter((q) => !q.rejected_reason)
+                .filter((q) => !filters.status || filters.status === 'pendiente')
+                .filter((q) => !filters.incident_type_id || q.incident_type_id === filters.incident_type_id)
+                .map((q, i) => ({
+                    id: -(i + 1),
+                    user_id: q.user_id,
+                    incident_type_id: q.incident_type_id,
+                    description: q.description,
+                    status: 'pendiente',
+                    latitude: q.latitude,
+                    longitude: q.longitude,
+                    address_text: q.address_text,
+                    is_edited: false,
+                    edited_at: null,
+                    claimed_by_user_id: null,
+                    claimed_at: null,
+                    possible_duplicate_of: q.possible_duplicate_of ?? null,
+                    duplicate_similarity: q.duplicate_similarity ?? null,
+                    created_at: q.created_at,
+                    updated_at: q.created_at,
+                    incident_type: incident_types.find((t) => t.id === q.incident_type_id),
+                    images: [],
+                    likes_count: 0,
+                    comments_count: 0,
+                    user_liked: false,
+                })),
+        [queuedReports, filters.status, filters.incident_type_id, incident_types],
+    );
+
     const visibleReports = useMemo(
-        () => reports.filter((r) => isWithinDateRange(r.created_at, dateRange)),
-        [reports, dateRange],
+        () => [...pendingAsReports, ...reports].filter((r) => isWithinDateRange(r.created_at, dateRange)),
+        [pendingAsReports, reports, dateRange],
     );
 
     const previewReport = useMemo(
@@ -184,6 +225,7 @@ export default function Home() {
     }, []);
 
     function handleViewDetails(id: number) {
+        if (id < 0) return; // still on the device — there's no server-side detail to load yet
         setSelectedReportId(id);
         setPreviewReportId(null);
     }
@@ -331,11 +373,11 @@ export default function Home() {
                         whileTap={{ scale: 0.95 }}
                         onClick={handleLocate}
                         disabled={locating}
-                        className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-slate-900/90 text-white shadow-[var(--shadow-elevated)] backdrop-blur-md transition-all hover:border-brand-500/40 hover:text-brand-300 hover:bg-slate-800/90 disabled:opacity-60"
+                        className="flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-slate-900/85 text-white shadow-[var(--shadow-modal)] backdrop-blur-md transition-colors hover:bg-slate-800/90 disabled:opacity-60"
                         title="Mi ubicación"
                     >
                         {locating ? (
-                            <Loader2 className="h-5 w-5 animate-spin text-brand-400" />
+                            <Loader2 className="h-5 w-5 animate-spin text-brand-600" />
                         ) : (
                             <Locate className="h-5 w-5" />
                         )}
@@ -348,14 +390,14 @@ export default function Home() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleFabClick}
-                        className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-[0_0_25px_rgba(37,99,235,0.45)] transition-all hover:bg-brand-500 hover:shadow-[0_0_35px_rgba(37,99,235,0.7)]"
+                        className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-[var(--shadow-modal)] transition-colors hover:bg-brand-700"
                         title="Registrar incidente"
                     >
                         <Plus className="h-6 w-6" />
                     </motion.button>
                     <span
-                        className="text-center text-[11px] font-bold leading-tight text-white tracking-wide"
-                        style={{ textShadow: '0 2px 6px rgba(0,0,0,0.9)' }}
+                        className="text-center text-[11px] font-semibold leading-tight text-white"
+                        style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}
                     >
                         Reportar<br />un incidente
                     </span>
@@ -371,16 +413,17 @@ export default function Home() {
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 onClick={handleFormClose}
-                                className="absolute inset-0 z-[1100] bg-black/60 backdrop-blur-sm md:hidden"
+                                className="absolute inset-0 z-[1100] bg-black/30 backdrop-blur-sm md:hidden"
                             />
 
-                            {/* z-[1200]: Leaflet's own controls sit at z-index 1000 */}
+                            {/* z-[1200]: Leaflet's own controls (zoom, attribution) sit at z-index 1000,
+                                so this panel must clear that or they'd show through on top of it. */}
                             <motion.div
                                 initial={{ x: '100%' }}
                                 animate={{ x: 0 }}
                                 exit={{ x: '100%' }}
                                 transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-                                className="absolute right-0 top-0 z-[1200] h-full w-full max-w-sm border-l border-white/10 bg-slate-900/95 shadow-[var(--shadow-modal)] backdrop-blur-2xl"
+                                className="absolute right-0 top-0 z-[1200] h-full w-full max-w-sm bg-white shadow-[var(--shadow-modal)]"
                             >
                                 <ReportForm
                                     coords={coords}

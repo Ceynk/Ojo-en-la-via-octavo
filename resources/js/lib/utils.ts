@@ -87,7 +87,9 @@ export const GENDER_LABELS: Record<Gender, string> = {
     prefiero_no_decir: 'Prefiero no decir',
 };
 
+/** Uploaded files live under /storage; absolute paths/URLs (e.g. the bundled demo photos in public/demo) pass through. */
 export function getStorageUrl(path: string): string {
+    if (path.startsWith('/') || /^https?:\/\//.test(path)) return path;
     return `/storage/${path}`;
 }
 

@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import { TrendingUp, TrendingDown, Minus, Users, FileText, CheckCircle2, Activity, HelpCircle, X } from 'lucide-react';
 import AdminLayout from '@/components/shared/AdminLayout';
+import ZoneMap, { type ZoneStat } from '@/components/reports/ZoneMap';
 import { cn, STATUS_LABELS } from '@/lib/utils';
 import type { PageProps, ReportStatus, User } from '@/types';
 
@@ -17,6 +18,7 @@ interface AnalyticsData {
     byStatus: Record<string, number>;
     trend: { day: string; total: number; resolved: number }[];
     activeUsers: (Pick<User, 'id' | 'name' | 'email' | 'is_active'> & { reports_count: number })[];
+    zones: ZoneStat[];
 }
 
 interface AnalyticsProps extends PageProps {
@@ -32,8 +34,10 @@ const TYPE_COLORS = [
 
 const STATUS_PALETTE: Record<string, string> = {
     pendiente:   '#f59e0b',
-    en_revision: '#3b82f6',
     notificado:  '#8b5cf6',
+    en_camino:   '#0ea5e9',
+    en_revision: '#3b82f6',
+    en_proceso:  '#f97316',
     resuelto:    '#10b981',
 };
 
@@ -53,6 +57,19 @@ function ChartTooltip({ active, payload, label }: any) {
         </div>
     );
 }
+
+/* ── Chart styling ────────────────────────────────────────────── */
+// White axis labels on the dark-blue cards; the grid stays faint so it doesn't compete.
+const AXIS_TICK = { fontSize: 11, fill: '#ffffff' };
+const GRID_STROKE = 'rgba(255, 255, 255, 0.12)';
+
+// Trend: every day gets its own column so dates never overlap; when the range doesn't fit,
+// the chart scrolls sideways instead of squeezing the labels together.
+const TREND_PX_PER_DAY = 76;
+
+// Active users: 5 rows visible, the rest reachable by scrolling the card vertically.
+const USER_ROW_PX = 44;
+const USERS_VISIBLE = 5;
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 function formatDay(day: string) {
@@ -166,7 +183,7 @@ function HelpModal({ open, onClose, title, children }: {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 12 }}
                         transition={{ duration: 0.2, ease: 'easeOut' }}
-                        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/15 bg-slate-900/95 text-white shadow-2xl backdrop-blur-2xl"
+                        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-white/10 shadow-2xl backdrop-blur-2xl"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="help-modal-title"
@@ -209,45 +226,35 @@ function HelpModal({ open, onClose, title, children }: {
 /* ── Main page ────────────────────────────────────────────────── */
 export default function AnalyticsIndex() {
     const { data, days } = usePage<AnalyticsProps>().props;
-    const {
-        reportsByType = [],
-        byStatus = {},
-        trend = [],
-        activeUsers = [],
-    } = data ?? {};
+    const { reportsByType, byStatus, trend, activeUsers } = data;
     const [helpOpen, setHelpOpen] = useState<keyof typeof HELP_CONTENT | null>(null);
 
-    const safeTrend = Array.isArray(trend) ? trend : Object.values(trend ?? {});
-    const safeReportsByType = Array.isArray(reportsByType) ? reportsByType : Object.values(reportsByType ?? {});
-    const safeByStatus = byStatus && typeof byStatus === 'object' ? byStatus : {};
-    const safeActiveUsers = Array.isArray(activeUsers) ? activeUsers : Object.values(activeUsers ?? {});
-
     /* Build status data for pie */
-    const statusData = Object.entries(safeByStatus).map(([status, value]) => ({
+    const statusData = Object.entries(byStatus).map(([status, value]) => ({
         name: STATUS_LABELS[status as ReportStatus] ?? status,
-        value: typeof value === 'number' ? value : Number(value) || 0,
+        value,
         status,
     }));
 
     /* Total in window */
     const total = statusData.reduce((s, d) => s + d.value, 0);
-    const resolved = (safeByStatus as Record<string, number>)['resuelto'] ?? 0;
+    const resolved = byStatus['resuelto'] ?? 0;
     const resolvedPct = total > 0 ? Math.round((resolved / total) * 100) : 0;
 
     /* Trend: last vs previous half */
-    const mid = Math.floor(safeTrend.length / 2);
-    const firstHalf = safeTrend.slice(0, mid).reduce((s, d) => s + (d.total || 0), 0);
-    const secondHalf = safeTrend.slice(mid).reduce((s, d) => s + (d.total || 0), 0);
+    const mid = Math.floor(trend.length / 2);
+    const firstHalf = trend.slice(0, mid).reduce((s, d) => s + d.total, 0);
+    const secondHalf = trend.slice(mid).reduce((s, d) => s + d.total, 0);
     const trendDelta = firstHalf > 0 ? Math.round(((secondHalf - firstHalf) / firstHalf) * 100) : null;
 
     /* Trend with formatted label */
-    const trendData = safeTrend.map((d) => ({ ...d, label: formatDay(d.day) }));
+    const trendData = trend.map((d) => ({ ...d, label: formatDay(d.day) }));
 
     /* Type pie data */
-    const typeData = safeReportsByType.map((r) => ({ name: r.name ?? 'Sin tipo', value: r.total || 0 }));
+    const typeData = reportsByType.map((r) => ({ name: r.name ?? 'Sin tipo', value: r.total }));
 
     /* Users bar data */
-    const usersData = safeActiveUsers.map((u) => ({ name: u.name, reportes: u.reports_count || 0 }));
+    const usersData = activeUsers.map((u) => ({ name: u.name, reportes: u.reports_count }));
 
     function changeRange(d: number) {
         router.get('/admin/analytics', { days: d }, { preserveState: false });
@@ -342,8 +349,11 @@ export default function AnalyticsIndex() {
                     onHelp={() => setHelpOpen('trend')}
                 >
                     {trendData.length > 0 ? (
+                        <>
+                        <div className="chart-scroll overflow-x-auto pb-2">
+                        <div style={{ width: trendData.length * TREND_PX_PER_DAY, minWidth: '100%' }}>
                         <ResponsiveContainer width="100%" height={220}>
-                            <AreaChart data={trendData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                            <AreaChart data={trendData} margin={{ top: 5, right: 16, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.25} />
@@ -354,27 +364,21 @@ export default function AnalyticsIndex() {
                                         <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                                <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                                 <XAxis
                                     dataKey="label"
-                                    tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+                                    tick={AXIS_TICK}
                                     axisLine={false}
                                     tickLine={false}
-                                    interval="preserveStartEnd"
+                                    interval={0}
                                 />
                                 <YAxis
-                                    tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+                                    tick={AXIS_TICK}
                                     axisLine={false}
                                     tickLine={false}
                                     allowDecimals={false}
                                 />
                                 <Tooltip content={<ChartTooltip />} />
-                                <Legend
-                                    iconType="circle"
-                                    iconSize={7}
-                                    wrapperStyle={{ fontSize: 11 }}
-                                    formatter={(v) => v === 'total' ? 'Total' : 'Resueltos'}
-                                />
                                 <Area
                                     type="monotone"
                                     dataKey="total"
@@ -397,6 +401,14 @@ export default function AnalyticsIndex() {
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
+                        </div>
+                        </div>
+                        {/* Legend outside the scroll area so it stays visible while scrolling. */}
+                        <div className="mt-2 flex items-center justify-center gap-4 text-[11px] text-white">
+                            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#3b82f6]" />Total</span>
+                            <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#10b981]" />Resueltos</span>
+                        </div>
+                        </>
                     ) : (
                         <EmptyChart />
                     )}
@@ -474,16 +486,22 @@ export default function AnalyticsIndex() {
                 {/* Active users bar chart */}
                 <ChartCard title="Usuarios más activos (por reportes en rango)" delay={0.35} onHelp={() => setHelpOpen('users')}>
                     {usersData.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={200}>
+                        <div
+                            className="chart-scroll overflow-y-auto pr-1"
+                            style={{ maxHeight: USERS_VISIBLE * USER_ROW_PX + 30 }}
+                        >
+                        <ResponsiveContainer width="100%" height={usersData.length * USER_ROW_PX + 30}>
                             <BarChart
                                 data={usersData}
                                 layout="vertical"
-                                margin={{ top: 0, right: 20, left: 10, bottom: 0 }}
+                                margin={{ top: 0, right: 24, left: 10, bottom: 0 }}
+                                barCategoryGap={10}
                             >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--color-border)" />
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={GRID_STROKE} />
                                 <XAxis
                                     type="number"
-                                    tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+                                    orientation="top"
+                                    tick={AXIS_TICK}
                                     axisLine={false}
                                     tickLine={false}
                                     allowDecimals={false}
@@ -491,22 +509,65 @@ export default function AnalyticsIndex() {
                                 <YAxis
                                     type="category"
                                     dataKey="name"
-                                    tick={{ fontSize: 10, fill: 'var(--color-muted)' }}
+                                    tick={{ ...AXIS_TICK, fontSize: 12 }}
                                     axisLine={false}
                                     tickLine={false}
-                                    width={90}
+                                    width={190}
+                                    interval={0}
                                 />
                                 <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.06)' }} />
                                 <Bar
                                     dataKey="reportes"
                                     fill="#3b82f6"
                                     radius={[0, 4, 4, 0]}
-                                    maxBarSize={16}
+                                    maxBarSize={24}
                                 />
                             </BarChart>
                         </ResponsiveContainer>
+                        </div>
                     ) : (
                         <EmptyChart message="Sin actividad en este rango" />
+                    )}
+                </ChartCard>
+
+                {/* RF-32: incidents by zone */}
+                <ChartCard title="Incidentes por zona" delay={0.4}>
+                    {(data.zones ?? []).length > 0 ? (
+                        <div className="space-y-4">
+                            <ZoneMap zones={data.zones} />
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-default text-left text-muted">
+                                            <th className="py-2 pr-3 font-medium">Zona (referencia)</th>
+                                            <th className="py-2 pr-3 font-medium">Tipo más frecuente</th>
+                                            <th className="py-2 pr-3 text-right font-medium">Total</th>
+                                            <th className="py-2 pr-3 text-right font-medium">Abiertos</th>
+                                            <th className="py-2 text-right font-medium">Resueltos</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-default">
+                                        {data.zones.slice(0, 10).map((z) => (
+                                            <tr key={`${z.lat}:${z.lng}`}>
+                                                <td className="max-w-[260px] truncate py-2 pr-3 text-secondary" title={z.reference}>
+                                                    {z.reference}
+                                                </td>
+                                                <td className="py-2 pr-3 text-secondary">{z.top_type}</td>
+                                                <td className="py-2 pr-3 text-right font-semibold text-primary">{z.total}</td>
+                                                <td className="py-2 pr-3 text-right text-amber-400">{z.open}</td>
+                                                <td className="py-2 text-right text-emerald-400">{z.resolved}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p className="text-[11px] text-muted">
+                                Cada zona es un cuadrante de ~550 m. El tamaño del círculo indica la cantidad de
+                                reportes y el color qué tanto sigue abierto (rojo) o resuelto (verde).
+                            </p>
+                        </div>
+                    ) : (
+                        <EmptyChart message="Sin reportes en este rango" />
                     )}
                 </ChartCard>
             </div>

@@ -82,6 +82,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('reports', [AdminReportController::class, 'index'])->name('reports.index');
         Route::get('reports/{report}', [AdminReportController::class, 'show'])->name('reports.show');
+        Route::patch('reports/{report}/validacion', [AdminReportController::class, 'validateContent'])->name('reports.validate');
         Route::delete('reports/{report}', [AdminReportController::class, 'destroy'])->name('reports.destroy');
 
         Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
@@ -107,6 +108,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('entidad')->name('entity.')->middleware('entity')->group(function () {
         Route::get('dashboard', [EntityPanelController::class, 'dashboard'])->name('dashboard');
         Route::get('reportes/{report}', [EntityPanelController::class, 'show'])->name('reports.show');
+        Route::post('reportes/{report}/estado', [EntityPanelController::class, 'updateStatus'])->name('reports.status');
         Route::get('perfil', [EntityPanelController::class, 'profile'])->name('profile');
         Route::put('perfil', [EntityPanelController::class, 'updateProfile'])->name('profile.update');
         Route::put('perfil/password', [EntityPanelController::class, 'updatePassword'])->name('profile.password');

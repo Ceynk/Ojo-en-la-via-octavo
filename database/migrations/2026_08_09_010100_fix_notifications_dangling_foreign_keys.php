@@ -16,6 +16,25 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Only SQLite repoints foreign keys on rename; on PostgreSQL/MySQL the status
+        // migration alters the column in place, so there is nothing dangling to repair.
+        // The SQLite rebuild also turned `type` into a free string (the code now writes
+        // types outside the old enum, e.g. 'reporte_invalido') — match that elsewhere.
+        if (DB::getDriverName() !== 'sqlite') {
+            if (DB::getDriverName() === 'pgsql') {
+                // The type-enum rebuild left the CHECK named notifications_type_check1, so
+                // drop every CHECK on the table (type is its only one) rather than by name.
+                $checks = DB::select("SELECT conname FROM pg_constraint WHERE conrelid = 'notifications'::regclass AND contype = 'c'");
+                foreach ($checks as $check) {
+                    DB::statement("ALTER TABLE notifications DROP CONSTRAINT \"{$check->conname}\"");
+                }
+            } else {
+                Schema::table('notifications', fn (Blueprint $table) => $table->string('type')->change());
+            }
+
+            return;
+        }
+
         Schema::disableForeignKeyConstraints();
 
         Schema::rename('notifications', 'notifications_old');
@@ -54,4 +73,5 @@ return new class extends Migration
         // Not reversible — this migration only repairs dangling foreign key references,
         // there is no meaningful "old" state to roll back to.
     }
+
 };

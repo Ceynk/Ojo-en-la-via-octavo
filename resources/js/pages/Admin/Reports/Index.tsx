@@ -13,7 +13,20 @@ import type { PageProps, PaginatedData, Report, ReportStatus, IncidentType } fro
 
 interface ReportsProps extends PageProps {
     reports: PaginatedData<Report>;
-    filters: { status?: string; type?: string };
+    filters: { status?: string; type?: string; validation?: string; sort?: string };
+}
+
+const SELECT_CLASS =
+    'rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors';
+
+function ValidationBadge({ value }: { value: Report['validation_status'] }) {
+    if (value === 'valido') {
+        return <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-400">Validado</span>;
+    }
+    if (value === 'invalido') {
+        return <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-[10px] font-medium text-red-400">No válido</span>;
+    }
+    return <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-medium text-amber-400">Sin revisar</span>;
 }
 
 const STATUS_OPTIONS: { value: ReportStatus | ''; label: string }[] = [
@@ -30,14 +43,18 @@ export default function AdminReportsIndex() {
     const { reports, filters, incident_types } = usePage<ReportsProps>().props;
     const [status, setStatus] = useState(filters.status ?? '');
     const [type, setType] = useState(filters.type ?? '');
+    const [validation, setValidation] = useState(filters.validation ?? '');
+    const [sort, setSort] = useState(filters.sort ?? '');
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [confirmId, setConfirmId] = useState<number | null>(null);
 
-    function applyFilters(overrides?: { status?: string; type?: string }) {
-        const merged = { status, type, ...overrides };
+    function applyFilters(overrides?: { status?: string; type?: string; validation?: string; sort?: string }) {
+        const merged = { status, type, validation, sort, ...overrides };
         const params: Record<string, string> = {};
         if (merged.status) params.status = merged.status;
         if (merged.type) params.type = merged.type;
+        if (merged.validation) params.validation = merged.validation;
+        if (merged.sort) params.sort = merged.sort;
         router.get('/admin/reports', params, { preserveState: true, replace: true });
     }
 
@@ -53,7 +70,7 @@ export default function AdminReportsIndex() {
     }
 
     const { data: reportList, current_page, last_page, links } = reports;
-    const hasFilters = !!filters.status || !!filters.type;
+    const hasFilters = !!filters.status || !!filters.type || !!filters.validation || !!filters.sort;
 
     return (
         <AdminLayout
@@ -78,10 +95,10 @@ export default function AdminReportsIndex() {
                             setStatus(e.target.value);
                             applyFilters({ status: e.target.value });
                         }}
-                        className="rounded-xl border border-white/15 bg-slate-900/80 py-2 pl-3 pr-8 text-sm text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors cursor-pointer"
+                        className="rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
                     >
                         {STATUS_OPTIONS.map((o) => (
-                            <option key={o.value} value={o.value} className="bg-slate-900 text-white">{o.label}</option>
+                            <option key={o.value} value={o.value} className="bg-white text-gray-900">{o.label}</option>
                         ))}
                     </select>
 
@@ -91,12 +108,40 @@ export default function AdminReportsIndex() {
                             setType(e.target.value);
                             applyFilters({ type: e.target.value });
                         }}
-                        className="rounded-xl border border-white/15 bg-slate-900/80 py-2 pl-3 pr-8 text-sm text-white outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors cursor-pointer"
+                        className="rounded-lg border border-default bg-surface-primary py-2 pl-3 pr-8 text-sm text-primary outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
                     >
-                        <option value="" className="bg-slate-900 text-slate-400">Todos los tipos</option>
+                        <option value="" className="bg-white text-gray-900">Todos los tipos</option>
                         {incident_types.map((t: IncidentType) => (
-                            <option key={t.id} value={t.id} className="bg-slate-900 text-white">{t.name}</option>
+                            <option key={t.id} value={t.id} className="bg-white text-gray-900">{t.name}</option>
                         ))}
+                    </select>
+
+                    {/* RF-14: review queue */}
+                    <select
+                        value={validation}
+                        onChange={(e) => {
+                            setValidation(e.target.value);
+                            applyFilters({ validation: e.target.value });
+                        }}
+                        className={SELECT_CLASS}
+                    >
+                        <option value="" className="bg-white text-gray-900">Toda validación</option>
+                        <option value="sin_revisar" className="bg-white text-gray-900">Sin revisar</option>
+                        <option value="valido" className="bg-white text-gray-900">Validados</option>
+                        <option value="invalido" className="bg-white text-gray-900">No válidos</option>
+                    </select>
+
+                    {/* RF-12: most supported first */}
+                    <select
+                        value={sort}
+                        onChange={(e) => {
+                            setSort(e.target.value);
+                            applyFilters({ sort: e.target.value });
+                        }}
+                        className={SELECT_CLASS}
+                    >
+                        <option value="" className="bg-white text-gray-900">Más recientes</option>
+                        <option value="support" className="bg-white text-gray-900">Más apoyados</option>
                     </select>
 
                     {hasFilters && (
@@ -104,6 +149,8 @@ export default function AdminReportsIndex() {
                             onClick={() => {
                                 setStatus('');
                                 setType('');
+                                setValidation('');
+                                setSort('');
                                 router.get('/admin/reports', {}, { replace: true });
                             }}
                             className="rounded-lg border border-default px-3 py-2 text-sm text-secondary transition-colors hover:bg-surface-tertiary"
@@ -150,7 +197,7 @@ export default function AdminReportsIndex() {
                                             </span>
                                         </td>
 
-                                        <td className="max-w-[260px] px-5 py-3 text-secondary">
+                                        <td className="min-w-[220px] max-w-[260px] px-5 py-3 text-secondary">
                                             <div className="flex flex-col gap-1">
                                                 <span>{truncate(report.description, 70)}</span>
                                                 {report.possible_duplicate_of !== null && (
@@ -171,15 +218,18 @@ export default function AdminReportsIndex() {
                                         </td>
 
                                         <td className="whitespace-nowrap px-5 py-3">
-                                            <StatusBadge status={report.status} />
+                                            <div className="flex flex-col items-start gap-1">
+                                                <StatusBadge status={report.status} />
+                                                <ValidationBadge value={report.validation_status} />
+                                            </div>
                                         </td>
 
                                         <td className="whitespace-nowrap px-5 py-3 text-muted text-xs">
                                             {formatRelativeTime(report.created_at)}
                                         </td>
 
-                                        <td className="px-5 py-3 text-center text-muted text-xs">
-                                            {report.likes_count ?? 0}
+                                        <td className="px-5 py-3 text-center text-muted text-xs" title="Apoyos: me gusta + confirmaciones">
+                                            {(report.likes_count ?? 0) + (report.confirmations_count ?? 0)}
                                         </td>
 
                                         <td className="px-5 py-3 text-center text-muted text-xs">

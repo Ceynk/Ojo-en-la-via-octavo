@@ -26,7 +26,7 @@ class AdminCitizenController extends Controller
 
         return Inertia::render('Admin/Citizens/Index', [
             'citizens' => $citizens,
-            'filters'  => $request->only(['search']),
+            'filters'  => (object) $request->only(['search']),
         ]);
     }
 

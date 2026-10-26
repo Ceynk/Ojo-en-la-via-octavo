@@ -41,16 +41,14 @@ export default function EntityLayout({ children, entityName, breadcrumb }: Entit
     return (
         <SidebarLayout
             navGroups={navGroups}
-            brandSubtitle={
-                <>
-                    <p>Panel de entidad</p>
-                    {entityName && (
-                        <p className="flex items-center gap-1">
-                            <Building2 className="h-3 w-3" />
-                            {entityName}
-                        </p>
-                    )}
-                </>
+            brandSubtitle="Panel de entidad"
+            brandContext={
+                entityName && (
+                    <span className="flex items-start gap-2">
+                        <Building2 className="mt-px h-3.5 w-3.5 shrink-0 text-brand-400" />
+                        <span className="font-medium leading-snug text-primary">{entityName}</span>
+                    </span>
+                )
             }
             breadcrumbs={breadcrumb ? [{ label: breadcrumb }] : undefined}
             headerRight={

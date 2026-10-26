@@ -25,7 +25,7 @@ class AdminExportController extends Controller
         $request->validate([
             'from'   => ['nullable', 'date'],
             'to'     => ['nullable', 'date'],
-            'status' => ['nullable', 'in:pendiente,en_revision,notificado,resuelto'],
+            'status' => ['nullable', 'in:pendiente,notificado,en_camino,en_revision,en_proceso,resuelto'],
         ]);
 
         $query = Report::with(['user:id,first_name,last_name,email', 'incidentType:id,name']);
@@ -42,24 +42,34 @@ class AdminExportController extends Controller
             $query->where('status', $request->status);
         }
 
-        $reports = $query->latest()->get();
+        $reports = $query->withCount(['likes', 'confirmations'])->latest()->get();
 
-        $csv = implode(',', ['ID', 'Tipo', 'Descripción', 'Estado', 'Dirección', 'Latitud', 'Longitud', 'Usuario', 'Email', 'Fecha']) . "\n";
+        // fputcsv handles quoting/escaping of every field (names with quotes, descriptions
+        // with commas or line breaks); the BOM makes Excel read the accents as UTF-8.
+        $out = fopen('php://temp', 'r+');
+        fwrite($out, "\xEF\xBB\xBF");
+        fputcsv($out, ['ID', 'Tipo', 'Descripción', 'Estado', 'Validación', 'Dirección', 'Latitud', 'Longitud', 'Apoyos', 'Usuario', 'Email', 'Fecha'], escape: '');
 
         foreach ($reports as $report) {
-            $csv .= implode(',', [
+            fputcsv($out, [
                 $report->id,
-                '"' . ($report->incidentType?->name ?? '') . '"',
-                '"' . str_replace('"', '""', $report->description) . '"',
+                $report->incidentType?->name ?? '',
+                $report->description,
                 $report->status,
-                '"' . str_replace('"', '""', $report->address_text) . '"',
+                $report->validation_status ?? 'sin_revisar',
+                $report->address_text,
                 $report->latitude,
                 $report->longitude,
-                '"' . ($report->user?->name ?? '') . '"',
-                '"' . ($report->user?->email ?? '') . '"',
+                $report->likes_count + $report->confirmations_count,
+                $report->user?->name ?? '',
+                $report->user?->email ?? '',
                 $report->created_at->toDateTimeString(),
-            ]) . "\n";
+            ], escape: '');
         }
+
+        rewind($out);
+        $csv = stream_get_contents($out);
+        fclose($out);
 
         return response($csv, 200, [
             'Content-Type'        => 'text/csv; charset=UTF-8',

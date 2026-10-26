@@ -1,0 +1,55 @@
+@startuml
+title Ojo en la Vía - Diagrama de despliegue
+
+node "Dispositivo del usuario\n(PC o celular)" <<device>> as Device {
+  node "Navegador web" <<executionEnvironment>> as Browser {
+    artifact "App React\n(JS/CSS compilado con Vite)" as SPA
+  }
+}
+
+node "Render" <<cloud>> as Render {
+  node "Web Service" <<executionEnvironment>> as PHP {
+    artifact "Laravel 13 (PHP 8.3)\n(rutas, controladores,\nservicios, modelos)" as App
+    folder "storage/app/public" as Storage {
+      artifact "Fotos y videos\nde reportes" as Media
+    }
+  }
+  node "Worker de cola\n(php artisan queue)" <<executionEnvironment>> as Worker {
+    artifact "Jobs\n(NotifyEntitiesOfReport,\nGenerateReportEmbedding)" as JobsArt
+  }
+  node "Laravel Reverb" <<executionEnvironment>> as ReverbNode {
+    artifact "Servidor WebSocket" as WSArt
+  }
+}
+
+node "Supabase" <<cloud>> as Supabase {
+  database "PostgreSQL" as DB {
+    artifact "Tablas de datos\n+ tabla de cola (jobs)" as Tables
+  }
+}
+
+node "Google Cloud" <<cloud>> as Google {
+  artifact "API de Gemini" as Gemini
+}
+
+node "OpenStreetMap" <<cloud>> as OSM {
+  artifact "Servidor de mapas (tiles)" as Tiles
+  artifact "Nominatim (direcciones)" as Nomi
+}
+
+node "Servidor de correo" <<device>> as SMTP {
+  artifact "SMTP" as SMTPArt
+}
+
+Browser -- PHP : HTTPS (Inertia)
+Browser -- ReverbNode : WSS (tiempo real)
+Browser -- OSM : HTTPS
+
+PHP -- DB : TCP 5432 (PostgreSQL)
+PHP -- ReverbNode : broadcast de eventos
+PHP -- Google : HTTPS (clasificación, duplicados)
+
+Worker -- DB : TCP 5432 (lee la cola / guarda)
+Worker -- Google : HTTPS (embeddings)
+Worker -- SMTP : SMTP (correo a entidades)
+@enduml

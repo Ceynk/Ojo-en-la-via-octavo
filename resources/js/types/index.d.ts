@@ -89,9 +89,16 @@ export interface Report {
     images?: ReportImage[];
     likes_count?: number;
     comments_count?: number;
+    /** "Es el mismo problema" confirmations — counts as community support with likes. */
+    confirmations_count?: number;
     user_liked?: boolean;
     status_history?: ReportStatusHistory[];
     original_report?: Pick<Report, 'id' | 'description'>;
+    /** Admin content review: null = not reviewed yet. */
+    validation_status?: 'valido' | 'invalido' | null;
+    validation_notes?: string | null;
+    validated_at?: string | null;
+    validated_by?: Pick<User, 'id' | 'name'> | null;
 }
 
 export interface ReportImage {
@@ -157,7 +164,7 @@ export interface ReportStatusHistory {
     report?: Pick<Report, 'id' | 'description' | 'incident_type_id'>;
 }
 
-export interface PageProps {
+export interface PageProps extends Record<string, unknown> {
     auth: {
         user: User | null;
     };

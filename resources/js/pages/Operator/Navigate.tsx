@@ -17,7 +17,8 @@ import { fetchRoute, type Route } from '@/lib/osrm';
 import { speak } from '@/lib/voice';
 import type { PageProps, Report } from '@/types';
 
-const GEOFENCE_METERS = 10;
+// Must match OperatorPanelController::GEOFENCE_METERS (the server is the one that enforces it).
+const GEOFENCE_METERS = 40;
 const ROUTE_REFRESH_METERS = 50;
 
 interface OperatorNavigateProps extends PageProps {
@@ -164,7 +165,7 @@ export default function OperatorNavigate() {
     useEffect(() => {
         if (!position) return;
         const timeout = setTimeout(() => {
-            axios.post('/operador/ubicacion', { ...position, report_id: report.id })
+            axios.post('/operador/ubicacion', { latitude: position.lat, longitude: position.lng, report_id: report.id })
                 .then((res) => {
                     const newStatus = res.data?.status;
                     if (newStatus && newStatus !== report.status) {

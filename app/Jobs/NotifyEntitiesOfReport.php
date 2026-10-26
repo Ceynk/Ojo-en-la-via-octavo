@@ -7,6 +7,7 @@ use App\Models\Entity;
 use App\Models\EntityNotification;
 use App\Models\Report;
 use App\Services\NotificationService;
+use App\Services\ReportStatusService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -34,14 +35,25 @@ class NotifyEntitiesOfReport implements ShouldQueue
         }
 
         $notifiedCount = 0;
+        $notifiedEntities = [];
 
         foreach ($entities as $entity) {
             $sent = $this->notifyEntity($entity);
             $notifiedCount += $sent;
+            if ($sent > 0) {
+                $notifiedEntities[] = $entity->name;
+            }
         }
 
-        if ($notifiedCount > 0) {
-            $this->report->update(['status' => 'notificado']);
+        // Only move a fresh report forward — never drag back one that someone already
+        // advanced (e.g. a retried job running after an operator took the case).
+        if ($notifiedCount > 0 && $this->report->fresh()->status === 'pendiente') {
+            app(ReportStatusService::class)->change(
+                $this->report->fresh(),
+                'notificado',
+                null,
+                'Notificado por correo a: ' . implode(', ', $notifiedEntities),
+            );
         }
     }
 

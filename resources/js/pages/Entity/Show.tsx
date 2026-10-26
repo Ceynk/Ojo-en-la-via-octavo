@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import {
     ArrowLeft, MapPin, User, Clock, Heart, MessageSquare,
-    Image as ImageIcon, ChevronLeft, ChevronRight, CheckCircle2, Loader2, UserCog,
+    Image as ImageIcon, ChevronLeft, ChevronRight, CheckCircle2, Loader2, UserCog, RefreshCw,
 } from 'lucide-react';
 import EntityLayout from '@/components/shared/EntityLayout';
 import StatusBadge from '@/components/reports/StatusBadge';
@@ -25,6 +25,81 @@ interface EntityShowProps extends PageProps {
         status_history: ReportStatusHistory[];
     };
     entity?: Pick<Entity, 'id' | 'name'>;
+    settable_statuses: ReportStatus[];
+}
+
+function StatusUpdateCard({ report, settable }: { report: Report; settable: ReportStatus[] }) {
+    const form = useForm({ status: '' as ReportStatus | '', notes: '' });
+    const resolved = report.status === 'resuelto';
+    const options = settable.filter((s) => s !== report.status);
+
+    function submit(e: React.FormEvent) {
+        e.preventDefault();
+        form.post(`/entidad/reportes/${report.id}/estado`, {
+            preserveScroll: true,
+            onSuccess: () => form.reset(),
+        });
+    }
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.03 }}
+            className="rounded-xl border border-default bg-surface-primary p-5 shadow-[var(--shadow-card)]"
+        >
+            <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-primary">
+                <RefreshCw className="h-4 w-4 text-muted" />
+                Actualizar estado
+            </h3>
+
+            {resolved ? (
+                <p className="text-sm italic text-muted">Este reporte ya fue resuelto.</p>
+            ) : (
+                <form onSubmit={submit} className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                        {options.map((s) => (
+                            <button
+                                key={s}
+                                type="button"
+                                onClick={() => form.setData('status', s)}
+                                className={cn(
+                                    'rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors',
+                                    form.data.status === s
+                                        ? 'border-brand-500 bg-brand-500/15 text-primary'
+                                        : 'border-default text-secondary hover:bg-surface-tertiary',
+                                )}
+                            >
+                                {ENTITY_STATUS_LABELS[s]}
+                            </button>
+                        ))}
+                    </div>
+                    <textarea
+                        value={form.data.notes}
+                        onChange={(e) => form.setData('notes', e.target.value)}
+                        rows={2}
+                        maxLength={500}
+                        placeholder="Nota para el historial (opcional): p. ej. programado para inspección el lunes"
+                        className="w-full resize-none rounded-lg border border-default bg-surface-secondary px-3 py-2 text-sm text-primary outline-none placeholder:text-muted focus:border-brand-500"
+                    />
+                    {form.errors.status && <p className="text-xs text-red-500">{form.errors.status}</p>}
+                    <div className="flex items-center justify-between gap-3">
+                        <p className="text-[11px] text-muted">
+                            Para marcarlo como resuelto, un operario debe cerrarlo en el sitio con evidencia.
+                        </p>
+                        <button
+                            type="submit"
+                            disabled={!form.data.status || form.processing}
+                            className="flex shrink-0 items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            {form.processing && <Loader2 className="h-3 w-3 animate-spin" />}
+                            Guardar
+                        </button>
+                    </div>
+                </form>
+            )}
+        </motion.div>
+    );
 }
 
 const STATUS_COLORS: Record<ReportStatus, string> = {
@@ -46,7 +121,7 @@ const STATUS_BG: Record<ReportStatus, string> = {
 };
 
 export default function EntityReportShow() {
-    const { report, auth } = usePage<EntityShowProps>().props;
+    const { report, auth, settable_statuses } = usePage<EntityShowProps>().props;
     const [imgIndex, setImgIndex] = useState(0);
     const images = report.images ?? [];
 
@@ -192,8 +267,11 @@ export default function EntityReportShow() {
                             )}
                         </motion.div>
 
-                        {/* Operador asignado — la entidad ya no cambia el estado directamente,
-                            solo el operador puede hacerlo desde el sitio (con geocerca). */}
+                        {/* Cambio de estado desde el panel (RF-20). "Resuelto" queda fuera a
+                            propósito: cerrar exige al operario en el sitio, con geocerca y
+                            evidencia (ver EntityPanelController::ENTITY_SETTABLE_STATUSES). */}
+                        <StatusUpdateCard report={report} settable={settable_statuses} />
+
                         <motion.div
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
