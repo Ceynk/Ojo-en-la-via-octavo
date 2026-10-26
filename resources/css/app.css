@@ -73,6 +73,11 @@
     main table {
         overflow-wrap: normal;
     }
+    /* Data tables live in an overflow-x-auto wrapper: on a phone they should be swiped sideways
+       with every column intact, not squeezed until each row is seven lines tall. */
+    main .overflow-x-auto > table {
+        min-width: 720px;
+    }
     main .truncate,
     main *:has(.truncate) {
         min-width: 0;

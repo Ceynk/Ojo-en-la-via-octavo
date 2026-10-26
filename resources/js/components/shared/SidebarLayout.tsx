@@ -163,7 +163,7 @@ export default function SidebarLayout({
                             animate={{ x: 0 }}
                             exit={{ x: -240 }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="fixed left-0 top-0 z-50 h-full w-60 border-r border-default bg-surface-primary lg:hidden"
+                            className="fixed left-0 top-0 z-50 h-full w-60 border-r border-default bg-slate-950/95 backdrop-blur-xl lg:hidden"
                         >
                             <SidebarContent compact={false} />
                         </motion.aside>
