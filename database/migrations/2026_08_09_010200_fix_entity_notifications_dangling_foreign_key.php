@@ -16,6 +16,26 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // Only SQLite repoints foreign keys on rename; on PostgreSQL/MySQL the status
+        // migration alters the column in place, so there is nothing dangling to repair.
+        // The SQLite rebuild also turned priority/status into free strings — match that.
+        if (DB::getDriverName() !== 'sqlite') {
+            if (DB::getDriverName() === 'pgsql') {
+                // priority/status are the table's only CHECKs; drop them whatever they're named.
+                $checks = DB::select("SELECT conname FROM pg_constraint WHERE conrelid = 'entity_notifications'::regclass AND contype = 'c'");
+                foreach ($checks as $check) {
+                    DB::statement("ALTER TABLE entity_notifications DROP CONSTRAINT \"{$check->conname}\"");
+                }
+            } else {
+                Schema::table('entity_notifications', function (Blueprint $table) {
+                    $table->string('priority')->default('media')->change();
+                    $table->string('status')->default('enviada')->change();
+                });
+            }
+
+            return;
+        }
+
         Schema::disableForeignKeyConstraints();
 
         Schema::rename('entity_notifications', 'entity_notifications_old');
@@ -38,8 +58,6 @@ return new class extends Migration
 
         Schema::drop('entity_notifications_old');
 
-        $this->resetSequences(['entity_notifications']);
-
         Schema::enableForeignKeyConstraints();
     }
 
@@ -49,18 +67,4 @@ return new class extends Migration
         // there is no meaningful "old" state to roll back to.
     }
 
-    /**
-     * Rows were copied with explicit ids, so on PostgreSQL the recreated table's
-     * sequence still starts at 1 — move it past the copied ids.
-     */
-    private function resetSequences(array $tables): void
-    {
-        if (DB::getDriverName() !== 'pgsql') {
-            return;
-        }
-
-        foreach ($tables as $table) {
-            DB::statement("SELECT setval(pg_get_serial_sequence('{$table}', 'id'), COALESCE((SELECT MAX(id) FROM {$table}), 0) + 1, false)");
-        }
-    }
 };

@@ -27,6 +27,22 @@ return new class extends Migration
 
     private function rebuild(array $statuses): void
     {
+        $list = implode(', ', array_map(fn ($s) => "'{$s}'", $statuses));
+
+        // PostgreSQL/MySQL can change the allowed values in place. Rebuilding there would
+        // break: renaming `reports` drags the other tables' foreign keys along to
+        // `reports_old`, which then can't be dropped.
+        switch (DB::getDriverName()) {
+            case 'pgsql':
+                DB::statement('ALTER TABLE reports DROP CONSTRAINT IF EXISTS reports_status_check');
+                DB::statement("ALTER TABLE reports ADD CONSTRAINT reports_status_check CHECK (status IN ({$list}))");
+                return;
+            case 'mysql':
+            case 'mariadb':
+                DB::statement("ALTER TABLE reports MODIFY status ENUM({$list}) NOT NULL DEFAULT 'pendiente'");
+                return;
+        }
+
         Schema::disableForeignKeyConstraints();
 
         Schema::rename('reports', 'reports_old');
@@ -54,23 +70,6 @@ return new class extends Migration
 
         Schema::drop('reports_old');
 
-        $this->resetSequences(['reports']);
-
         Schema::enableForeignKeyConstraints();
-    }
-
-    /**
-     * Rows were copied with explicit ids, so on PostgreSQL the recreated table's
-     * sequence still starts at 1 — move it past the copied ids.
-     */
-    private function resetSequences(array $tables): void
-    {
-        if (DB::getDriverName() !== 'pgsql') {
-            return;
-        }
-
-        foreach ($tables as $table) {
-            DB::statement("SELECT setval(pg_get_serial_sequence('{$table}', 'id'), COALESCE((SELECT MAX(id) FROM {$table}), 0) + 1, false)");
-        }
     }
 };
