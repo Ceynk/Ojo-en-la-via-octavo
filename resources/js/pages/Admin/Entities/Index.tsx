@@ -389,8 +389,8 @@ export default function EntitiesIndex() {
                 {/* Header */}
                 <div className="page-heading">
                     <div>
-                        <p className="text-sm text-secondary">Organiza responsables y tipos de incidente</p>
-                        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-primary">Entidades</h2>
+                        <p className="text-sm font-medium text-slate-400">Organiza responsables y tipos de incidente</p>
+                        <h2 className="mt-1 text-2xl font-bold tracking-tight text-blue-50">Entidades</h2>
                     </div>
                     <button
                         onClick={() => { setShowCreate((v) => !v); setEditingId(null); }}
@@ -473,7 +473,7 @@ export default function EntitiesIndex() {
                                         )}
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2">
-                                                <h3 className="truncate text-base font-semibold text-primary">{entity.name}</h3>
+                                                <h3 className="truncate text-base font-bold text-blue-50">{entity.name}</h3>
                                                 <span className={cn(
                                                     'rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
                                                     PRIORITY_STYLES[entity.priority],
@@ -481,7 +481,7 @@ export default function EntitiesIndex() {
                                                     Prioridad {entity.priority}
                                                 </span>
                                             </div>
-                                            <p className="mt-1 text-xs text-muted">
+                                            <p className="mt-1 text-xs font-medium text-sky-300/80">
                                                 {entity.incident_types?.length ?? 0} tipo{(entity.incident_types?.length ?? 0) !== 1 ? 's' : ''} de incidente asignado{(entity.incident_types?.length ?? 0) !== 1 ? 's' : ''}
                                             </p>
                                         </div>
@@ -496,16 +496,16 @@ export default function EntitiesIndex() {
                                     </div>
                                     <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
                                         <div className="rounded-lg border border-default bg-slate-900/55 px-3 py-2">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Tipos</p>
-                                            <p className="mt-1 text-sm font-semibold text-primary">{entity.incident_types?.length ?? 0}</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Tipos asignados</p>
+                                            <p className="mt-1 text-sm font-bold text-cyan-200">{entity.incident_types?.length ?? 0}</p>
                                         </div>
                                         <div className="rounded-lg border border-default bg-slate-900/55 px-3 py-2">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Usuarios</p>
-                                            <p className="mt-1 text-sm font-semibold text-primary">{entity.users?.length ?? 0}</p>
+                                            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Usuarios</p>
+                                            <p className="mt-1 text-sm font-bold text-violet-200">{entity.users?.length ?? 0}</p>
                                         </div>
                                         <div className="rounded-lg border border-default bg-slate-900/55 px-3 py-2">
-                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Estado</p>
-                                            <p className={cn('mt-1 text-sm font-semibold', entity.is_active ? 'text-emerald-300' : 'text-slate-300')}>
+                                            <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Estado actual</p>
+                                            <p className={cn('mt-1 text-sm font-bold', entity.is_active ? 'text-emerald-300' : 'text-slate-300')}>
                                                 {entity.is_active ? 'Operativa' : 'Pausada'}
                                             </p>
                                         </div>
@@ -605,17 +605,17 @@ export default function EntitiesIndex() {
                                 {editingId !== entity.id && (
                                     <div className="grid gap-3 px-5 py-4 sm:grid-cols-2">
                                         {entity.motto && (
-                                            <p className="text-sm font-medium italic text-secondary sm:col-span-2">"{entity.motto}"</p>
+                                            <p className="border-l-2 border-violet-400/60 pl-3 text-sm font-semibold italic text-violet-100 sm:col-span-2">"{entity.motto}"</p>
                                         )}
                                         {entity.description && (
-                                            <p className="text-sm leading-relaxed text-secondary sm:col-span-2">{entity.description}</p>
+                                            <p className="text-sm leading-relaxed text-slate-300 sm:col-span-2">{entity.description}</p>
                                         )}
                                         {entity.website_url && (
                                             <a
                                                 href={entity.website_url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex min-w-0 items-center gap-1.5 text-xs text-brand-300 hover:text-brand-200 hover:underline"
+                                                className="flex min-w-0 items-center gap-1.5 text-xs font-medium text-cyan-300 hover:text-cyan-200 hover:underline"
                                             >
                                                 <Globe className="h-3 w-3 shrink-0" />
                                                 <span className="truncate">{entity.website_url}</span>
@@ -623,7 +623,7 @@ export default function EntitiesIndex() {
                                         )}
                                         <p className={cn(
                                             'flex min-w-0 items-center gap-1.5 text-xs',
-                                            entity.entity_email ? 'text-secondary' : 'text-muted italic',
+                                            entity.entity_email ? 'font-medium text-sky-200' : 'italic text-slate-500',
                                         )}>
                                             {entity.entity_email ? (
                                                 <Mail className="h-3 w-3 shrink-0" />
@@ -634,8 +634,16 @@ export default function EntitiesIndex() {
                                         </p>
                                         {entity.incident_types && entity.incident_types.length > 0 && (
                                             <div className="flex flex-wrap gap-1.5 sm:col-span-2">
-                                                {entity.incident_types.map((t) => (
-                                                    <span key={t.id} className="rounded-full border border-brand-300/15 bg-brand-500/10 px-2.5 py-1 text-[11px] font-medium text-brand-100">
+                                                {entity.incident_types.map((t, index) => (
+                                                    <span
+                                                        key={t.id}
+                                                        className={cn(
+                                                            'rounded-full border px-2.5 py-1 text-[11px] font-semibold',
+                                                            index % 3 === 0 && 'border-cyan-300/25 bg-cyan-500/10 text-cyan-100',
+                                                            index % 3 === 1 && 'border-violet-300/25 bg-violet-500/10 text-violet-100',
+                                                            index % 3 === 2 && 'border-amber-300/25 bg-amber-500/10 text-amber-100',
+                                                        )}
+                                                    >
                                                         {t.name}
                                                     </span>
                                                 ))}
