@@ -100,7 +100,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                 <div className="px-4 sm:px-6 lg:px-8">
                     <div className="flex h-[4.5rem] items-center justify-between">
                         {/* Logo */}
-                        <Link href="/inicio" className="flex items-center gap-2 group">
+                        <Link href="/inicio" prefetch="hover" className="flex items-center gap-2 group">
                             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-lg shadow-blue-950/30 transition-transform group-hover:scale-105">
                                 <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-6 w-6 object-contain" />
                             </div>
@@ -115,6 +115,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                                     <Link
                                         key={href}
                                         href={href}
+                                        prefetch="hover"
                                         className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-secondary transition-colors hover:bg-surface-tertiary hover:text-primary"
                                     >
                                         <Icon className="h-4 w-4" />
