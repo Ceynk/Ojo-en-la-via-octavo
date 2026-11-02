@@ -16,9 +16,9 @@ interface EntitiesProps extends PageProps {
 }
 
 const PRIORITY_STYLES: Record<string, string> = {
-    alta:  'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    media: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-    baja:  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    alta:  'border-red-400/25 bg-red-500/15 text-red-300',
+    media: 'border-amber-400/25 bg-amber-500/15 text-amber-300',
+    baja:  'border-emerald-400/25 bg-emerald-500/15 text-emerald-300',
 };
 
 /* ── Entity form (create or edit) ───────────────────────────── */
@@ -76,7 +76,7 @@ function EntityForm({
                         value={data.name}
                         onChange={(e) => setData('name', e.target.value)}
                         placeholder="Secretaría de Infraestructura"
-                        className="w-full rounded-lg border border-default bg-surface-secondary py-2 px-3 text-sm text-primary placeholder:text-muted outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                        className="h-11 w-full rounded-[var(--radius-button)] border border-default bg-slate-950/45 px-3 py-2 text-sm text-primary placeholder:text-muted outline-none transition-colors focus:border-brand-400/70 focus:ring-2 focus:ring-brand-500/20"
                     />
                     {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
                 </div>
@@ -88,7 +88,7 @@ function EntityForm({
                         value={data.description}
                         onChange={(e) => setData('description', e.target.value)}
                         placeholder="Huecos, malla vial, obras civiles…"
-                        className="w-full rounded-lg border border-default bg-surface-secondary py-2 px-3 text-sm text-primary placeholder:text-muted outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                        className="h-11 w-full rounded-[var(--radius-button)] border border-default bg-slate-950/45 px-3 py-2 text-sm text-primary placeholder:text-muted outline-none transition-colors focus:border-brand-400/70 focus:ring-2 focus:ring-brand-500/20"
                     />
                     {errors.description && <p className="mt-1 text-xs text-red-600">{errors.description}</p>}
                 </div>
@@ -105,7 +105,7 @@ function EntityForm({
                         value={data.entity_email}
                         onChange={(e) => setData('entity_email', e.target.value)}
                         placeholder="contacto@entidad.gov.co"
-                        className="w-full rounded-lg border border-default bg-surface-secondary py-2 px-3 text-sm text-primary placeholder:text-muted outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                        className="h-11 w-full rounded-[var(--radius-button)] border border-default bg-slate-950/45 px-3 py-2 text-sm text-primary placeholder:text-muted outline-none transition-colors focus:border-brand-400/70 focus:ring-2 focus:ring-brand-500/20"
                     />
                     {errors.entity_email && <p className="mt-1 text-xs text-red-600">{errors.entity_email}</p>}
                 </div>
@@ -153,7 +153,7 @@ function EntityForm({
                     onChange={(e) => setData('subject_template', e.target.value)}
                     maxLength={300}
                     placeholder="Nuevo reporte de {tipo} en Villavicencio"
-                    className="w-full rounded-lg border border-default bg-surface-secondary py-2 px-3 text-sm text-primary placeholder:text-muted outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                    className="h-11 w-full rounded-[var(--radius-button)] border border-default bg-slate-950/45 px-3 py-2 text-sm text-primary placeholder:text-muted outline-none transition-colors focus:border-brand-400/70 focus:ring-2 focus:ring-brand-500/20"
                 />
                 {errors.subject_template && <p className="mt-1 text-xs text-red-600">{errors.subject_template}</p>}
             </div>
@@ -171,7 +171,7 @@ function EntityForm({
                     onChange={(e) => setData('message_template', e.target.value)}
                     rows={4}
                     placeholder="Se ha registrado un nuevo incidente de tipo {tipo}…"
-                    className="w-full resize-none rounded-lg border border-default bg-surface-secondary px-3 py-2 text-sm text-primary placeholder:text-muted outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-colors"
+                    className="w-full resize-none rounded-[var(--radius-button)] border border-default bg-slate-950/45 px-3 py-2 text-sm text-primary placeholder:text-muted outline-none transition-colors focus:border-brand-400/70 focus:ring-2 focus:ring-brand-500/20"
                 />
                 {errors.message_template && <p className="mt-1 text-xs text-red-600">{errors.message_template}</p>}
             </div>
@@ -383,26 +383,33 @@ export default function EntitiesIndex() {
         >
             <Head title="Entidades — Admin" />
 
-            <div className="space-y-4">
+            <div className="space-y-6">
                 <FlashMessages />
 
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted">
-                        {entities.length} entidad{entities.length !== 1 ? 'es' : ''} configurada{entities.length !== 1 ? 's' : ''}
-                    </p>
+                <div className="page-heading">
+                    <div>
+                        <p className="text-sm text-secondary">Organiza responsables y tipos de incidente</p>
+                        <h2 className="mt-1 text-2xl font-semibold tracking-tight text-primary">Entidades</h2>
+                    </div>
                     <button
                         onClick={() => { setShowCreate((v) => !v); setEditingId(null); }}
                         className={cn(
-                            'flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors',
+                            'flex items-center gap-2 rounded-[var(--radius-button)] px-4 py-2.5 text-sm font-semibold transition-colors',
                             showCreate
-                                ? 'border border-default text-secondary hover:bg-surface-tertiary'
-                                : 'bg-brand-600 text-white hover:bg-brand-700',
+                                ? 'border border-default text-secondary hover:bg-surface-tertiary hover:text-primary'
+                                : 'bg-brand-600 text-white shadow-lg shadow-blue-950/25 hover:bg-brand-500',
                         )}
                     >
                         <Plus className={cn('h-4 w-4 transition-transform', showCreate && 'rotate-45')} />
                         {showCreate ? 'Cancelar' : 'Nueva entidad'}
                     </button>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted">
+                    <Building2 className="h-4 w-4 text-brand-300" />
+                    {entities.length} entidad{entities.length !== 1 ? 'es' : ''} configurada{entities.length !== 1 ? 's' : ''}
+                    <span className="text-default">·</span>
+                    {entities.filter((entity) => entity.is_active).length} activas
                 </div>
 
                 {/* Create form */}
@@ -415,8 +422,8 @@ export default function EntitiesIndex() {
                             transition={{ duration: 0.2 }}
                             className="overflow-hidden"
                         >
-                            <div className="rounded-xl border border-brand-800 bg-surface-primary p-5 shadow-[var(--shadow-card)]">
-                                <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-primary">
+                            <div className="surface-panel rounded-[var(--radius-card)] p-5 sm:p-6">
+                                <h3 className="mb-5 flex items-center gap-2 text-base font-semibold text-primary">
                                     <Building2 className="h-4 w-4 text-brand-600" />
                                     Nueva entidad
                                 </h3>
@@ -441,60 +448,81 @@ export default function EntitiesIndex() {
                         <p className="text-xs text-muted">Crea una entidad para empezar a notificarle reportes</p>
                     </motion.div>
                 ) : (
-                    <div className="space-y-2">
+                    <div className="grid gap-4 xl:grid-cols-2">
                         {entities.map((entity, i) => (
                             <motion.div
                                 key={entity.id}
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: i * 0.04 }}
-                                className="rounded-xl border border-default bg-surface-primary shadow-[var(--shadow-card)]"
+                                className="surface-panel overflow-hidden rounded-[var(--radius-card)]"
                             >
                                 {/* Entity header */}
-                                <div className="flex flex-wrap items-center gap-3 p-4">
-                                    {entity.logo_path ? (
-                                        <img
-                                            src={getStorageUrl(entity.logo_path)}
-                                            alt=""
-                                            className="h-7 w-7 shrink-0 rounded-full bg-white object-contain ring-1 ring-default"
-                                        />
-                                    ) : (
-                                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-tertiary">
-                                            <Building2 className="h-3.5 w-3.5 text-muted" />
+                                <div className="border-b border-default bg-slate-950/25 p-5">
+                                    <div className="flex items-start gap-3">
+                                        {entity.logo_path ? (
+                                            <img
+                                                src={getStorageUrl(entity.logo_path)}
+                                                alt=""
+                                                className="h-12 w-12 shrink-0 rounded-xl bg-white object-contain p-1.5 ring-1 ring-white/15"
+                                            />
+                                        ) : (
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-brand-300/20 bg-brand-500/15">
+                                                <Building2 className="h-5 w-5 text-brand-200" />
+                                            </div>
+                                        )}
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <h3 className="truncate text-base font-semibold text-primary">{entity.name}</h3>
+                                                <span className={cn(
+                                                    'rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
+                                                    PRIORITY_STYLES[entity.priority],
+                                                )}>
+                                                    Prioridad {entity.priority}
+                                                </span>
+                                            </div>
+                                            <p className="mt-1 text-xs text-muted">
+                                                {entity.incident_types?.length ?? 0} tipo{(entity.incident_types?.length ?? 0) !== 1 ? 's' : ''} de incidente asignado{(entity.incident_types?.length ?? 0) !== 1 ? 's' : ''}
+                                            </p>
                                         </div>
-                                    )}
-
-                                    <span className="flex-1 truncate text-sm font-medium text-primary">
-                                        {entity.name}
-                                    </span>
-
-                                    <span className="text-[11px] text-muted">
-                                        {(entity.incident_types?.length ?? 0)} tipo{(entity.incident_types?.length ?? 0) !== 1 ? 's' : ''}
-                                    </span>
-
-                                    <span className={cn(
-                                        'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase',
-                                        PRIORITY_STYLES[entity.priority],
-                                    )}>
-                                        {entity.priority}
-                                    </span>
-
-                                    {!entity.is_active && (
-                                        <span className="rounded-full bg-surface-tertiary px-2 py-0.5 text-[10px] font-semibold text-muted">
-                                            inactiva
+                                        <span className={cn(
+                                            'shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide',
+                                            entity.is_active
+                                                ? 'border-emerald-400/25 bg-emerald-500/15 text-emerald-300'
+                                                : 'border-slate-400/20 bg-slate-500/15 text-slate-300',
+                                        )}>
+                                            {entity.is_active ? 'Activa' : 'Inactiva'}
                                         </span>
-                                    )}
+                                    </div>
+                                    <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                        <div className="rounded-lg border border-default bg-slate-900/55 px-3 py-2">
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Tipos</p>
+                                            <p className="mt-1 text-sm font-semibold text-primary">{entity.incident_types?.length ?? 0}</p>
+                                        </div>
+                                        <div className="rounded-lg border border-default bg-slate-900/55 px-3 py-2">
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Usuarios</p>
+                                            <p className="mt-1 text-sm font-semibold text-primary">{entity.users?.length ?? 0}</p>
+                                        </div>
+                                        <div className="rounded-lg border border-default bg-slate-900/55 px-3 py-2">
+                                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">Estado</p>
+                                            <p className={cn('mt-1 text-sm font-semibold', entity.is_active ? 'text-emerald-300' : 'text-slate-300')}>
+                                                {entity.is_active ? 'Operativa' : 'Pausada'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 border-b border-default px-5 py-3">
 
                                     {/* Users toggle */}
                                     <button
                                         onClick={() => setUsersOpenId(usersOpenId === entity.id ? null : entity.id)}
                                         title="Usuarios de la entidad"
                                         className={cn(
-                                            'flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors',
+                                            'flex items-center gap-1.5 rounded-[var(--radius-button)] border px-3 py-2 text-xs font-semibold transition-colors',
                                             usersOpenId === entity.id
-                                                ? 'border-brand-300 bg-brand-100 text-brand-700 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-300'
+                                                ? 'border-brand-300/40 bg-brand-500/15 text-brand-200'
                                                 : (entity.users?.length ?? 0) === 0
-                                                    ? 'border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-400'
+                                                    ? 'border-amber-400/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
                                                     : 'border-default text-secondary hover:bg-surface-tertiary hover:text-primary',
                                         )}
                                     >
@@ -509,7 +537,7 @@ export default function EntitiesIndex() {
                                         onClick={() => toggleEntity(entity)}
                                         disabled={togglingId === entity.id}
                                         title={entity.is_active ? 'Desactivar' : 'Activar'}
-                                        className="text-muted transition-colors hover:text-primary disabled:opacity-50"
+                                        className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-button)] text-muted transition-colors hover:bg-surface-tertiary hover:text-primary disabled:opacity-50"
                                     >
                                         {togglingId === entity.id ? (
                                             <Loader2 className="h-5 w-5 animate-spin" />
@@ -527,9 +555,9 @@ export default function EntitiesIndex() {
                                             setShowCreate(false);
                                         }}
                                         className={cn(
-                                            'flex h-7 w-7 items-center justify-center rounded-lg transition-colors',
+                                            'flex h-9 w-9 items-center justify-center rounded-[var(--radius-button)] transition-colors',
                                             editingId === entity.id
-                                                ? 'bg-brand-100 text-brand-600 dark:bg-brand-900/30'
+                                                ? 'bg-brand-500/15 text-brand-200'
                                                 : 'text-muted hover:bg-surface-tertiary hover:text-primary',
                                         )}
                                     >
@@ -560,7 +588,7 @@ export default function EntitiesIndex() {
                                     ) : (
                                         <button
                                             onClick={() => setConfirmDeleteId(entity.id)}
-                                            className="flex h-7 w-7 items-center justify-center rounded-lg text-muted transition-colors hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/30"
+                                            className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-button)] text-muted transition-colors hover:bg-red-500/15 hover:text-red-300"
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />
                                         </button>
@@ -568,33 +596,33 @@ export default function EntitiesIndex() {
 
                                     {/* Expand chevron */}
                                     <ChevronDown className={cn(
-                                        'h-4 w-4 shrink-0 text-muted transition-transform',
+                                        'ml-auto h-4 w-4 shrink-0 text-muted transition-transform',
                                         editingId === entity.id && 'rotate-180',
                                     )} />
                                 </div>
 
                                 {/* Description + incident type chips when collapsed */}
                                 {editingId !== entity.id && (
-                                    <div className="border-t border-default px-4 pb-3 pt-2">
+                                    <div className="grid gap-3 px-5 py-4 sm:grid-cols-2">
                                         {entity.motto && (
-                                            <p className="mb-1.5 text-xs font-medium italic text-secondary">"{entity.motto}"</p>
+                                            <p className="text-sm font-medium italic text-secondary sm:col-span-2">"{entity.motto}"</p>
                                         )}
                                         {entity.description && (
-                                            <p className="mb-1.5 text-xs text-muted">{entity.description}</p>
+                                            <p className="text-sm leading-relaxed text-secondary sm:col-span-2">{entity.description}</p>
                                         )}
                                         {entity.website_url && (
                                             <a
                                                 href={entity.website_url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="mb-1.5 flex items-center gap-1.5 text-xs text-brand-600 hover:underline"
+                                                className="flex min-w-0 items-center gap-1.5 text-xs text-brand-300 hover:text-brand-200 hover:underline"
                                             >
                                                 <Globe className="h-3 w-3 shrink-0" />
-                                                {entity.website_url}
+                                                <span className="truncate">{entity.website_url}</span>
                                             </a>
                                         )}
                                         <p className={cn(
-                                            'mb-1.5 flex items-center gap-1.5 text-xs',
+                                            'flex min-w-0 items-center gap-1.5 text-xs',
                                             entity.entity_email ? 'text-secondary' : 'text-muted italic',
                                         )}>
                                             {entity.entity_email ? (
@@ -602,12 +630,12 @@ export default function EntitiesIndex() {
                                             ) : (
                                                 <MailX className="h-3 w-3 shrink-0" />
                                             )}
-                                            {entity.entity_email ?? 'Sin correo de contacto configurado'}
+                                            <span className="truncate">{entity.entity_email ?? 'Sin correo de contacto configurado'}</span>
                                         </p>
                                         {entity.incident_types && entity.incident_types.length > 0 && (
-                                            <div className="flex flex-wrap gap-1">
+                                            <div className="flex flex-wrap gap-1.5 sm:col-span-2">
                                                 {entity.incident_types.map((t) => (
-                                                    <span key={t.id} className="rounded-full bg-surface-tertiary px-2 py-0.5 text-[10px] text-secondary">
+                                                    <span key={t.id} className="rounded-full border border-brand-300/15 bg-brand-500/10 px-2.5 py-1 text-[11px] font-medium text-brand-100">
                                                         {t.name}
                                                     </span>
                                                 ))}
