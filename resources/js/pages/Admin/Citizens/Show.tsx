@@ -6,6 +6,7 @@ import {
     IdCard, Home, MapPin, Cake, Users as UsersIcon,
 } from 'lucide-react';
 import AdminLayout from '@/components/shared/AdminLayout';
+import UserAvatar from '@/components/shared/UserAvatar';
 import StatusBadge from '@/components/reports/StatusBadge';
 import { cn, DOCUMENT_TYPE_LABELS, formatDateTime, formatRelativeTime, GENDER_LABELS, truncate } from '@/lib/utils';
 import type { PageProps, User, Report, Comment } from '@/types';
@@ -42,13 +43,11 @@ export default function CitizenShow() {
                 <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="rounded-xl border border-default bg-surface-primary p-5 shadow-[var(--shadow-card)]"
+                    className="surface-panel rounded-[var(--radius-card)] p-5 sm:p-6"
                 >
                     <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-100 text-lg font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-400">
-                                {citizen.name[0]?.toUpperCase()}
-                            </div>
+                            <UserAvatar id={citizen.id} name={citizen.name} profilePhoto={citizen.profile_photo} size="lg" />
                             <div>
                                 <h2 className="text-lg font-bold text-primary">{citizen.name}</h2>
                                 <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted">
@@ -68,10 +67,10 @@ export default function CitizenShow() {
                         </div>
 
                         <span className={cn(
-                            'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium',
+                            'flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold',
                             citizen.is_active
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+                                ? 'border-emerald-400/25 bg-emerald-500/15 text-emerald-300'
+                                : 'border-red-400/25 bg-red-500/15 text-red-300',
                         )}>
                             {citizen.is_active ? <UserCheck className="h-3 w-3" /> : <UserX className="h-3 w-3" />}
                             {citizen.is_active ? 'Activo' : 'Inactivo'}
@@ -138,7 +137,7 @@ export default function CitizenShow() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05 }}
-                            className="flex items-center gap-3 rounded-xl border border-default bg-surface-primary p-4 shadow-[var(--shadow-card)]"
+                            className="surface-panel flex items-center gap-3 rounded-[var(--radius-card)] p-4"
                         >
                             <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', color)}>
                                 <Icon className="h-4 w-4" />
@@ -157,7 +156,7 @@ export default function CitizenShow() {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="rounded-xl border border-default bg-surface-primary shadow-[var(--shadow-card)]"
+                        className="table-shell"
                     >
                         <div className="border-b border-default px-5 py-4">
                             <h3 className="flex items-center gap-2 text-sm font-semibold text-primary">
@@ -193,7 +192,7 @@ export default function CitizenShow() {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.15 }}
-                        className="rounded-xl border border-default bg-surface-primary shadow-[var(--shadow-card)]"
+                        className="table-shell"
                     >
                         <div className="border-b border-default px-5 py-4">
                             <h3 className="flex items-center gap-2 text-sm font-semibold text-primary">
