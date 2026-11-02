@@ -10,6 +10,7 @@ import UserAvatar from '@/components/shared/UserAvatar';
 import StatusBadge from '@/components/reports/StatusBadge';
 import { FlashMessages } from '@/components/ui/alert';
 import { cn, formatRelativeTime, truncate } from '@/lib/utils';
+import { getIncidentTypeStyle } from '@/lib/incidentTypeStyle';
 import type { PageProps, PaginatedData, Report, ReportStatus, IncidentType } from '@/types';
 
 interface ReportsProps extends PageProps {
@@ -39,6 +40,35 @@ const STATUS_OPTIONS: { value: ReportStatus | ''; label: string }[] = [
     { value: 'en_proceso', label: 'En proceso' },
     { value: 'resuelto', label: 'Resuelto' },
 ];
+
+function IncidentTypeCell({ type }: { type: IncidentType | undefined }) {
+    const { color, Icon } = getIncidentTypeStyle(type);
+
+    return (
+        <div
+            className="flex min-w-[190px] items-center gap-3 rounded-xl border px-3 py-2.5"
+            style={{
+                borderColor: `${color}55`,
+                backgroundColor: `${color}12`,
+            }}
+        >
+            <span
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+                style={{ backgroundColor: `${color}28`, color }}
+            >
+                <Icon className="h-5 w-5" strokeWidth={2.2} />
+            </span>
+            <div className="min-w-0">
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
+                    Tipo de problema
+                </span>
+                <span className="block truncate text-sm font-bold text-primary" title={type?.name ?? 'Sin tipo'}>
+                    {type?.name ?? 'Sin tipo'}
+                </span>
+            </div>
+        </div>
+    );
+}
 
 export default function AdminReportsIndex() {
     const { reports, filters, incident_types } = usePage<ReportsProps>().props;
@@ -178,35 +208,37 @@ export default function AdminReportsIndex() {
                     className="overflow-hidden rounded-2xl border border-default bg-surface-primary shadow-[var(--shadow-card)]"
                 >
                     <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                        <table className="w-full min-w-[1040px] text-sm">
                             <thead>
-                                <tr className="border-b border-default bg-surface-secondary text-left text-xs text-muted">
-                                    <th className="px-5 py-4 font-medium">Tipo</th>
-                                    <th className="px-5 py-4 font-medium">Descripción</th>
-                                    <th className="px-5 py-4 font-medium">Usuario</th>
-                                    <th className="px-5 py-4 font-medium">Estado</th>
-                                    <th className="px-5 py-4 font-medium">Fecha</th>
-                                    <th className="px-5 py-4 font-medium text-center">
-                                        <Heart className="inline h-3 w-3" />
+                                <tr className="border-b border-default bg-surface-secondary text-left text-[11px] uppercase tracking-[0.08em] text-muted">
+                                    <th className="w-[230px] px-5 py-4 font-semibold">Tipo de problema</th>
+                                    <th className="min-w-[280px] px-5 py-4 font-semibold">Descripción</th>
+                                    <th className="px-5 py-4 font-semibold">Reportado por</th>
+                                    <th className="px-5 py-4 font-semibold">Seguimiento</th>
+                                    <th className="px-5 py-4 font-semibold">Fecha</th>
+                                    <th className="px-5 py-4 text-center font-semibold" title="Apoyos">
+                                        <Heart className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+                                        <span className="sr-only">Apoyos</span>
+                                        <span aria-hidden="true">Apoyos</span>
                                     </th>
-                                    <th className="px-5 py-4 font-medium text-center">
-                                        <MessageSquare className="inline h-3 w-3" />
+                                    <th className="px-5 py-4 text-center font-semibold" title="Comentarios">
+                                        <MessageSquare className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+                                        <span className="sr-only">Comentarios</span>
+                                        <span aria-hidden="true">Comentarios</span>
                                     </th>
-                                    <th className="px-5 py-4 font-medium"></th>
+                                    <th className="px-5 py-4 font-semibold"><span className="sr-only">Acciones</span></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-default">
                                 {reportList.map((report) => (
-                                    <tr key={report.id} className="group transition-colors hover:bg-white/[0.04]">
-                                        <td className="whitespace-nowrap px-5 py-4">
-                                            <span className="rounded-full bg-surface-tertiary px-2 py-0.5 text-xs font-medium text-secondary">
-                                                {report.incident_type?.name ?? '—'}
-                                            </span>
+                                    <tr key={report.id} className="group transition-colors odd:bg-white/[0.015] hover:bg-brand-500/[0.06]">
+                                        <td className="px-5 py-3.5 align-middle">
+                                            <IncidentTypeCell type={report.incident_type} />
                                         </td>
 
-                                        <td className="min-w-[240px] max-w-[320px] px-5 py-4 text-secondary" title={report.description}>
+                                        <td className="max-w-[340px] px-5 py-3.5 text-secondary" title={report.description}>
                                             <div className="flex flex-col gap-1">
-                                                <span>{truncate(report.description, 70)}</span>
+                                                <span className="line-clamp-2 leading-5">{truncate(report.description, 90)}</span>
                                                 {report.possible_duplicate_of !== null && (
                                                     <Link
                                                         href={`/admin/reports/${report.possible_duplicate_of}`}
@@ -220,33 +252,39 @@ export default function AdminReportsIndex() {
                                             </div>
                                         </td>
 
-                                        <td className="whitespace-nowrap px-5 py-4 text-secondary">
+                                        <td className="whitespace-nowrap px-5 py-3.5 text-secondary">
                                             <div className="flex items-center gap-2.5">
                                                 <UserAvatar id={report.user?.id} name={report.user?.name} profilePhoto={report.user?.profile_photo} size="sm" />
                                                 <span>{report.user?.name ?? '—'}</span>
                                             </div>
                                         </td>
 
-                                        <td className="whitespace-nowrap px-5 py-4">
+                                        <td className="whitespace-nowrap px-5 py-3.5">
                                             <div className="flex flex-col items-start gap-1">
                                                 <StatusBadge status={report.status} />
                                                 <ValidationBadge value={report.validation_status} />
                                             </div>
                                         </td>
 
-                                        <td className="whitespace-nowrap px-5 py-4 text-muted text-xs">
-                                            {formatRelativeTime(report.created_at)}
+                                        <td className="whitespace-nowrap px-5 py-3.5 text-xs text-muted">
+                                            <span title={new Date(report.created_at).toLocaleString('es-CO')}>
+                                                {formatRelativeTime(report.created_at)}
+                                            </span>
                                         </td>
 
-                                        <td className="px-5 py-4 text-center text-muted text-xs" title="Apoyos: me gusta + confirmaciones">
-                                            {(report.likes_count ?? 0) + (report.confirmations_count ?? 0)}
+                                        <td className="px-5 py-3.5 text-center text-xs text-secondary" title="Apoyos: me gusta + confirmaciones">
+                                            <span className="inline-flex min-w-8 items-center justify-center rounded-md bg-rose-500/10 px-2 py-1 font-semibold text-rose-300">
+                                                {(report.likes_count ?? 0) + (report.confirmations_count ?? 0)}
+                                            </span>
                                         </td>
 
-                                        <td className="px-5 py-4 text-center text-muted text-xs">
-                                            {report.comments_count ?? 0}
+                                        <td className="px-5 py-3.5 text-center text-xs text-secondary">
+                                            <span className="inline-flex min-w-8 items-center justify-center rounded-md bg-sky-500/10 px-2 py-1 font-semibold text-sky-300">
+                                                {report.comments_count ?? 0}
+                                            </span>
                                         </td>
 
-                                        <td className="px-5 py-4">
+                                        <td className="px-5 py-3.5">
                                             <div className="flex items-center gap-2">
                                                 <Link
                                                     href={`/admin/reports/${report.id}`}
