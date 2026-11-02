@@ -2,9 +2,10 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import {
     FileText, Clock, CheckCircle, Users, UserCheck,
-    ArrowRight, Heart, MessageSquare,
+    ArrowRight, Heart,
 } from 'lucide-react';
 import AdminLayout from '@/components/shared/AdminLayout';
+import UserAvatar from '@/components/shared/UserAvatar';
 import StatusBadge from '@/components/reports/StatusBadge';
 import { cn, formatRelativeTime, truncate } from '@/lib/utils';
 import type { PageProps, Report } from '@/types';
@@ -67,9 +68,14 @@ export default function Dashboard() {
         <AdminLayout title="Dashboard" breadcrumbs={[{ label: 'Dashboard' }]}>
             <Head title="Dashboard Admin" />
 
-            <div className="space-y-6">
+            <div className="space-y-8">
+                <div>
+                    <p className="text-sm text-secondary">Resumen general de la operación</p>
+                    <h2 className="mt-1 text-2xl font-semibold tracking-tight text-primary">Visión general</h2>
+                </div>
+
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     {statCards.map(({ key, label, icon: Icon, color, border }, i) => (
                         <motion.div
                             key={key}
@@ -77,17 +83,17 @@ export default function Dashboard() {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.06 }}
                             className={cn(
-                                'flex items-center gap-3 rounded-xl border bg-surface-primary px-4 py-3',
+                                'flex items-center gap-4 rounded-2xl border bg-surface-primary px-5 py-5',
                                 'shadow-[var(--shadow-card)]',
                                 border,
                             )}
                         >
-                            <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-lg', color)}>
-                                <Icon className="h-6 w-6" />
+                            <div className={cn('flex h-12 w-12 shrink-0 items-center justify-center rounded-xl', color)}>
+                                <Icon className="h-5 w-5" />
                             </div>
                             <div className="min-w-0">
-                                <p className="text-3xl font-bold leading-tight text-primary">{stats[key].toLocaleString('es-CO')}</p>
-                                <p className="truncate text-sm text-secondary">{label}</p>
+                                <p className="text-3xl font-bold leading-none tracking-tight text-primary">{stats[key].toLocaleString('es-CO')}</p>
+                                <p className="mt-1 truncate text-sm text-secondary">{label}</p>
                             </div>
                         </motion.div>
                     ))}
@@ -98,10 +104,13 @@ export default function Dashboard() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.35 }}
-                    className="rounded-xl border border-default bg-surface-primary shadow-[var(--shadow-card)]"
+                    className="overflow-hidden rounded-2xl border border-default bg-surface-primary shadow-[var(--shadow-card)]"
                 >
-                    <div className="flex items-center justify-between border-b border-default px-5 py-4">
-                        <h2 className="text-sm font-semibold text-primary">Reportes recientes</h2>
+                    <div className="flex items-center justify-between border-b border-default px-5 py-5">
+                        <div>
+                            <h2 className="text-base font-semibold text-primary">Reportes recientes</h2>
+                            <p className="mt-1 text-xs text-muted">Últimos registros recibidos</p>
+                        </div>
                         <Link
                             href="/admin/reports"
                             className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700"
@@ -114,44 +123,47 @@ export default function Dashboard() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-default bg-surface-secondary text-left text-xs text-muted">
-                                    <th className="px-5 py-3 font-medium">Tipo</th>
-                                    <th className="px-5 py-3 font-medium">Descripción</th>
-                                    <th className="px-5 py-3 font-medium">Usuario</th>
-                                    <th className="px-5 py-3 font-medium">Estado</th>
-                                    <th className="px-5 py-3 font-medium">Fecha</th>
-                                    <th className="px-5 py-3 font-medium text-center">
+                                    <th className="px-5 py-4 font-medium">Tipo</th>
+                                    <th className="px-5 py-4 font-medium">Descripción</th>
+                                    <th className="px-5 py-4 font-medium">Usuario</th>
+                                    <th className="px-5 py-4 font-medium">Estado</th>
+                                    <th className="px-5 py-4 font-medium">Fecha</th>
+                                    <th className="px-5 py-4 font-medium text-center">
                                         <Heart className="inline h-3 w-3" />
                                     </th>
-                                    <th className="px-5 py-3 font-medium"></th>
+                                    <th className="px-5 py-4 font-medium"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-default">
                                 {recent_reports.map((report) => (
                                     <tr
                                         key={report.id}
-                                        className="transition-colors hover:bg-surface-secondary"
+                                        className="transition-colors hover:bg-white/[0.04]"
                                     >
-                                        <td className="whitespace-nowrap px-5 py-3">
+                                        <td className="whitespace-nowrap px-5 py-4">
                                             <span className="rounded-full bg-surface-tertiary px-2 py-0.5 text-xs font-medium text-secondary">
                                                 {report.incident_type?.name ?? '—'}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3 text-secondary">
+                                        <td className="max-w-[280px] px-5 py-4 text-secondary" title={report.description}>
                                             {truncate(report.description, 60)}
                                         </td>
-                                        <td className="whitespace-nowrap px-5 py-3 text-secondary">
-                                            {report.user?.name ?? '—'}
+                                        <td className="whitespace-nowrap px-5 py-4 text-secondary">
+                                            <div className="flex items-center gap-2.5">
+                                                <UserAvatar id={report.user?.id} name={report.user?.name} profilePhoto={report.user?.profile_photo} size="sm" />
+                                                <span>{report.user?.name ?? '—'}</span>
+                                            </div>
                                         </td>
-                                        <td className="whitespace-nowrap px-5 py-3">
+                                        <td className="whitespace-nowrap px-5 py-4">
                                             <StatusBadge status={report.status} />
                                         </td>
-                                        <td className="whitespace-nowrap px-5 py-3 text-muted">
+                                        <td className="whitespace-nowrap px-5 py-4 text-muted">
                                             {formatRelativeTime(report.created_at)}
                                         </td>
-                                        <td className="px-5 py-3 text-center text-muted">
+                                        <td className="px-5 py-4 text-center text-muted">
                                             {report.likes_count ?? 0}
                                         </td>
-                                        <td className="px-5 py-3">
+                                        <td className="px-5 py-4">
                                             <Link
                                                 href={`/admin/reports/${report.id}`}
                                                 className="text-xs text-brand-600 hover:text-brand-700"

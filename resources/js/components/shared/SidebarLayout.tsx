@@ -5,6 +5,7 @@ import { LogOut, Menu, ChevronRight, PanelLeftClose, PanelLeftOpen } from 'lucid
 import type { PageProps } from '@/types';
 import { cn } from '@/lib/utils';
 import LogoutModal from './LogoutModal';
+import UserAvatar from './UserAvatar';
 
 export interface SidebarNavItem {
     href: string;
@@ -109,9 +110,7 @@ export default function SidebarLayout({
             {/* Footer */}
             <div className="border-t border-default p-3">
                 <div className={cn('flex items-center gap-3 rounded-lg p-2', compact && 'justify-center')}>
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-sm font-semibold dark:bg-brand-900 dark:text-brand-300">
-                        {auth.user?.name.charAt(0).toUpperCase()}
-                    </div>
+                <UserAvatar id={auth.user?.id} name={auth.user?.name} profilePhoto={auth.user?.profile_photo} size="md" />
                     {!compact && (
                         <div className="flex-1 overflow-hidden">
                             <p className="truncate text-sm font-medium text-primary">{auth.user?.name}</p>

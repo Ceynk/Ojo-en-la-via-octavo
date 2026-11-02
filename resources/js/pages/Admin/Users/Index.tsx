@@ -6,6 +6,7 @@ import {
     ChevronLeft, ChevronRight, Loader2,
 } from 'lucide-react';
 import AdminLayout from '@/components/shared/AdminLayout';
+import UserAvatar from '@/components/shared/UserAvatar';
 import { FlashMessages } from '@/components/ui/alert';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import type { PageProps, PaginatedData, User } from '@/types';
@@ -114,9 +115,7 @@ export default function UsersIndex() {
                                         {/* Avatar + name + email */}
                                         <td className="px-5 py-3">
                                             <div className="flex items-center gap-3">
-                                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-400">
-                                                    {user.name[0]?.toUpperCase()}
-                                                </div>
+                                                <UserAvatar id={user.id} name={user.name} profilePhoto={user.profile_photo} size="md" />
                                                 <div>
                                                     <p className="font-medium text-primary">{user.name}</p>
                                                     <p className="text-xs text-muted">{user.email}</p>

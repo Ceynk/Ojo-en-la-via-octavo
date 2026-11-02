@@ -3,6 +3,7 @@ import { Head, useForm, usePage } from '@inertiajs/react';
 import { motion } from 'framer-motion';
 import { Bell, Search, Users, CheckSquare, Square, Send, Loader2, X } from 'lucide-react';
 import AdminLayout from '@/components/shared/AdminLayout';
+import UserAvatar from '@/components/shared/UserAvatar';
 import { FlashMessages } from '@/components/ui/alert';
 import { cn } from '@/lib/utils';
 import type { PageProps, User } from '@/types';
@@ -146,9 +147,7 @@ export default function AdminNotificationsIndex() {
                                             ) : (
                                                 <Square className="h-4 w-4 shrink-0 text-muted" />
                                             )}
-                                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-tertiary text-xs font-bold text-secondary">
-                                                {user.name[0]?.toUpperCase()}
-                                            </div>
+                                            <UserAvatar id={user.id} name={user.name} size="sm" />
                                             <div className="min-w-0">
                                                 <p className="truncate text-sm font-medium text-primary">{user.name}</p>
                                                 <p className="truncate text-xs text-muted">{user.email}</p>
