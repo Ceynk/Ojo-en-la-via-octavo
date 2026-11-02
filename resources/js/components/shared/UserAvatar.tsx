@@ -52,7 +52,7 @@ export default function UserAvatar({ id, name, profilePhoto, size = 'md', classN
         <div
             aria-label={displayName}
             className={cn(
-                'flex shrink-0 items-center justify-center rounded-full font-semibold ring-1',
+                'flex shrink-0 items-center justify-center rounded-full font-semibold ring-1 ring-inset',
                 avatarSizes[size],
                 getAvatarColor(id, displayName),
                 className,

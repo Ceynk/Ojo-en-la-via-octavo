@@ -31,8 +31,8 @@
         "Segoe UI Symbol", "Noto Color Emoji";
 
     /* Border Radius */
-    --radius-card: 0.75rem;
-    --radius-button: 0.5rem;
+    --radius-card: 0.875rem;
+    --radius-button: 0.625rem;
 
     /* Shadows */
     --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
@@ -45,14 +45,14 @@
         color-scheme: dark;
         /* Glass theme — used everywhere, on top of the blurred city background. Panels are a
            translucent dark blue (slate-900) so text stays readable over the photo. */
-        --bg-primary: rgba(15, 23, 42, 0.78);
+        --bg-primary: rgba(10, 21, 42, 0.86);
         --bg-secondary: transparent;
-        --bg-tertiary: rgba(30, 41, 59, 0.75);
-        --border-default: rgba(255, 255, 255, 0.15);
-        --border-muted: rgba(255, 255, 255, 0.08);
+        --bg-tertiary: rgba(29, 48, 82, 0.72);
+        --border-default: rgba(148, 183, 226, 0.2);
+        --border-muted: rgba(148, 183, 226, 0.11);
         --text-primary: #ffffff;
-        --text-secondary: rgba(255, 255, 255, 0.75);
-        --text-muted: rgba(255, 255, 255, 0.5);
+        --text-secondary: rgba(226, 236, 250, 0.78);
+        --text-muted: rgba(194, 211, 235, 0.58);
     }
 
     * {
@@ -61,6 +61,17 @@
 
     html {
         scroll-behavior: smooth;
+        background: #081426;
+    }
+
+    ::selection {
+        color: #fff;
+        background: rgba(37, 99, 235, 0.75);
+    }
+
+    :focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 2px;
     }
 
     /* Phones: long unbroken strings (the demo e-mail aliases, URLs) and `truncate` text inside
@@ -90,6 +101,19 @@
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    button:disabled,
+    [aria-disabled='true'] {
+        cursor: not-allowed;
     }
 
     /* City photo behind every page: darkened with a deep-blue veil and blurred so it reads as
@@ -139,6 +163,51 @@
     .text-secondary { color: var(--text-secondary); }
     .text-muted { color: var(--text-muted); }
 
+    .surface-panel {
+        background: linear-gradient(145deg, rgba(17, 36, 68, 0.9), rgba(8, 24, 49, 0.88));
+        border: 1px solid var(--border-default);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.16);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+    }
+
+    .page-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 3.25rem;
+    }
+
+    .page-heading h1,
+    .page-heading h2 {
+        letter-spacing: -0.02em;
+    }
+
+    .table-shell {
+        overflow: hidden;
+        border: 1px solid var(--border-default);
+        border-radius: 0.875rem;
+        background: rgba(10, 25, 50, 0.82);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+    }
+
+    .table-shell tbody tr {
+        transition: background-color 150ms ease;
+    }
+
+    .table-shell tbody tr:hover {
+        background-color: rgba(96, 165, 250, 0.07);
+    }
+
+    .table-shell th {
+        color: var(--text-muted);
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+    }
+
     .status-badge {
         display: inline-flex;
         align-items: center;
@@ -148,6 +217,17 @@
         font-size: 0.75rem;
         font-weight: 500;
         line-height: 1;
+    }
+
+    @media (max-width: 640px) {
+        .page-heading {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        main .table-shell {
+            border-radius: 0.75rem;
+        }
     }
 
     .status-pendiente {

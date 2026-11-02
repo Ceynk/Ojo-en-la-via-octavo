@@ -96,15 +96,15 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
                 inside it (like the notification dropdown) is capped at whatever z-index the header
                 itself has, regardless of its own z-index. Must clear the map page's overlays
                 (toolbar/panels top out around z-600) or dropdowns here render behind them. */}
-            <header className="sticky top-0 z-[900] border-b border-default bg-surface-primary/80 backdrop-blur-sm">
+            <header className="sticky top-0 z-[900] border-b border-default bg-slate-950/75 backdrop-blur-xl">
                 <div className="px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 items-center justify-between">
+                    <div className="flex h-[4.5rem] items-center justify-between">
                         {/* Logo */}
                         <Link href="/inicio" className="flex items-center gap-2 group">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white shadow-sm transition-transform group-hover:scale-105">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-lg shadow-blue-950/30 transition-transform group-hover:scale-105">
                                 <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-6 w-6 object-contain" />
                             </div>
-                            <span className="text-base font-bold text-primary">Ojo en la Vía</span>
+                            <span className="hidden text-base font-bold tracking-tight text-primary sm:inline">Ojo en la Vía</span>
                         </Link>
 
                         {/* Nav + actions, grouped together on the right so the header doesn't feel hollow in the middle */}

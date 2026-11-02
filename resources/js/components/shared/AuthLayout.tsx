@@ -25,10 +25,10 @@ export default function AuthLayout({ children, eyebrow, tagline, footer, wide = 
                 transition={{ duration: 0.5, ease: 'easeOut' }}
                 className={cn('relative w-full', wide ? 'max-w-2xl' : 'max-w-md')}
             >
-                <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
+                <div                 className="overflow-hidden rounded-2xl border border-white/15 bg-slate-950/55 shadow-2xl shadow-black/30 backdrop-blur-xl">
                     <div className="h-1.5 w-full bg-gradient-to-r from-emerald-400 via-brand-400 to-brand-600" />
 
-                    <div className={cn('py-10', wide ? 'px-6 sm:px-10' : 'px-8')}>
+                    <div className={cn('py-9', wide ? 'px-6 sm:px-10' : 'px-7 sm:px-8')}>
                         <div className="flex flex-col items-center text-center">
                             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-lg">
                                 <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-[4.5rem] w-[4.5rem] object-contain" />

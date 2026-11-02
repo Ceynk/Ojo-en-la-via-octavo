@@ -4,18 +4,18 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+    'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-button)] text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
     {
         variants: {
             variant: {
                 default:
-                    'bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800',
+                    'bg-brand-600 text-white shadow-lg shadow-brand-950/30 hover:bg-brand-500 active:bg-brand-700',
                 destructive:
                     'bg-red-600 text-white shadow-sm hover:bg-red-700 active:bg-red-800',
                 outline:
-                    'border border-default bg-surface-primary shadow-sm hover:bg-surface-tertiary',
+                    'border border-default bg-surface-primary text-primary shadow-sm hover:border-brand-400/50 hover:bg-surface-tertiary',
                 secondary:
-                    'bg-surface-tertiary text-primary shadow-sm hover:bg-surface-tertiary/80',
+                    'bg-surface-tertiary text-primary shadow-sm hover:bg-brand-900/50',
                 ghost: 'hover:bg-surface-tertiary hover:text-primary',
                 link: 'text-brand-600 underline-offset-4 hover:underline',
             },

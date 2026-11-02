@@ -48,10 +48,10 @@ export default function SidebarLayout({
     // `compact` = icons only. The desktop sidebar follows the collapse toggle; the mobile drawer
     // always passes false, since it's only open when the user wants to read the menu.
     const SidebarContent = ({ compact }: { compact: boolean }) => (
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col bg-slate-950/20">
             {/* Logo: two fixed lines so it always fits the 64px header row */}
-            <div className="flex h-16 shrink-0 items-center gap-3 border-b border-default px-4">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white">
+            <div className="flex h-[4.5rem] shrink-0 items-center gap-3 border-b border-default px-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-lg shadow-blue-950/30">
                     <img src="/Logos/logo-1-icon.png" alt="Ojo en la Vía" className="h-6 w-6 object-contain" />
                 </div>
                 {!compact && (
@@ -74,11 +74,11 @@ export default function SidebarLayout({
             )}
 
             {/* Nav */}
-            <nav className="flex-1 overflow-y-auto py-4 px-2">
+            <nav className="flex-1 overflow-y-auto px-2 py-5">
                 {navGroups.map((group) => (
-                    <div key={group.label} className="mb-6">
+                    <div key={group.label} className="mb-7">
                         {!compact && (
-                            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                            <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
                                 {group.label}
                             </p>
                         )}
@@ -90,9 +90,9 @@ export default function SidebarLayout({
                                         key={href}
                                         href={href}
                                         className={cn(
-                                            'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150',
+                                            'relative flex items-center gap-3 rounded-[var(--radius-button)] px-3 py-2.5 text-sm font-medium transition-colors duration-150',
                                             isActive
-                                                ? 'bg-brand-600 text-white shadow-sm'
+                                                ? 'bg-brand-600/90 text-white shadow-lg shadow-blue-950/30 before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-white'
                                                 : 'text-secondary hover:bg-surface-tertiary hover:text-primary',
                                         )}
                                         title={compact ? label : undefined}
@@ -108,7 +108,7 @@ export default function SidebarLayout({
             </nav>
 
             {/* Footer */}
-            <div className="border-t border-default p-3">
+            <div className="border-t border-default bg-slate-950/20 p-3">
                 <div className={cn('flex items-center gap-3 rounded-lg p-2', compact && 'justify-center')}>
                 <UserAvatar id={auth.user?.id} name={auth.user?.name} profilePhoto={auth.user?.profile_photo} size="md" />
                     {!compact && (
@@ -122,7 +122,7 @@ export default function SidebarLayout({
                     type="button"
                     onClick={() => setLogoutModalOpen(true)}
                     className={cn(
-                        'mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-950/20',
+                    'mt-1 flex w-full items-center gap-3 rounded-[var(--radius-button)] px-3 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/10 hover:text-red-200',
                         compact && 'justify-center',
                     )}
                 >
@@ -137,9 +137,9 @@ export default function SidebarLayout({
         <div className="flex h-screen overflow-hidden bg-surface-secondary">
             {/* Desktop sidebar */}
             <motion.aside
-                animate={{ width: collapsed ? 64 : 240 }}
+                animate={{ width: collapsed ? 72 : 264 }}
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
-                className="relative hidden shrink-0 border-r border-default bg-surface-primary lg:flex lg:flex-col"
+                className="relative hidden shrink-0 border-r border-default bg-slate-950/55 lg:flex lg:flex-col"
             >
                 <div className="h-full overflow-hidden">
                     <SidebarContent compact={collapsed} />
@@ -162,7 +162,7 @@ export default function SidebarLayout({
                             animate={{ x: 0 }}
                             exit={{ x: -240 }}
                             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                            className="fixed left-0 top-0 z-50 h-full w-60 border-r border-default bg-slate-950/95 backdrop-blur-xl lg:hidden"
+                            className="fixed left-0 top-0 z-50 h-full w-72 border-r border-default bg-slate-950/95 backdrop-blur-xl lg:hidden"
                         >
                             <SidebarContent compact={false} />
                         </motion.aside>
@@ -173,7 +173,7 @@ export default function SidebarLayout({
             {/* Main content area */}
             <div className="flex flex-1 flex-col overflow-hidden">
                 {/* Top bar */}
-                <header className="flex h-16 items-center gap-4 border-b border-default bg-surface-primary px-4 lg:px-6">
+                <header className="flex h-[4.5rem] items-center gap-4 border-b border-default bg-slate-950/65 px-4 backdrop-blur-xl lg:px-6">
                     <button
                         onClick={() => setSidebarOpen(true)}
                         className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-tertiary hover:text-primary lg:hidden"
@@ -227,7 +227,7 @@ export default function SidebarLayout({
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.25, ease: 'easeOut' }}
-                            className="min-h-full p-4 lg:p-6"
+                            className="mx-auto min-h-full w-full max-w-[1680px] p-4 lg:p-7 xl:p-8"
                         >
                             {children}
                         </motion.div>

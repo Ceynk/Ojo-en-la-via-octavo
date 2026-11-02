@@ -22,8 +22,8 @@ const GlassInput = React.forwardRef<HTMLInputElement, GlassInputProps>(
                     <input
                         id={inputId}
                         ref={ref}
-                        className={cn(
-                            'h-11 w-full rounded-lg border border-white/15 bg-black/20 pl-10 text-sm text-white placeholder:text-white/40 transition-colors focus:border-transparent focus:outline-none focus:ring-2 focus:ring-brand-400',
+                            className={cn(
+                                'h-11 w-full rounded-[var(--radius-button)] border border-white/15 bg-slate-950/35 pl-10 text-sm text-white placeholder:text-white/40 transition-colors focus:border-brand-300/70 focus:outline-none focus:ring-2 focus:ring-brand-400/25',
                             rightElement ? 'pr-10' : 'pr-3',
                             error && 'ring-2 ring-red-400/60',
                             className,
